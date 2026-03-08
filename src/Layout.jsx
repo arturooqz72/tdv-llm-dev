@@ -66,14 +66,17 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   useEffect(() => {
+    const existingScript = document.querySelector(
+      'script[src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"]'
+    );
+    if (existingScript) return;
+
     const script = document.createElement('script');
     script.src = 'https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js';
     script.async = true;
     document.body.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    return () => {};
   }, []);
 
   const unreadMessagesCount = 0;
@@ -98,6 +101,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Cumpleaños', icon: Cake, page: 'Birthdays' },
     { name: 'Miembros', icon: Users, page: 'Users' },
     { name: 'Audios', icon: Music, page: 'PublicAudios' },
+    { name: 'Mis Audios', icon: Music, page: 'MyAudios' },
     { name: 'Memorama', icon: Sparkles, page: 'Memorama' }
   ];
 
@@ -276,22 +280,31 @@ export default function Layout({ children, currentPageName }) {
                       Audios
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={createPageUrl('MyAudios')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                      Mis Audios
+                    </Link>
+                  </DropdownMenuItem>
                   {currentUser && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl('MyAudios')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                          Mis Audios
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl('RadioDashboard')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                          Dashboard Radio
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem asChild>
+                      <Link to={createPageUrl('RadioDashboard')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                        Dashboard Radio
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Link
+                to={createPageUrl('MyAudios')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  currentPageName === 'MyAudios'
+                    ? 'bg-cyan-500 text-black'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                Mis Audios
+              </Link>
 
               <Link
                 to={createPageUrl('LiveStreams')}
@@ -564,23 +577,25 @@ export default function Layout({ children, currentPageName }) {
                   </React.Fragment>
                 ))}
 
-                {currentUser && authRequiredItems.map((item) => (
-                  <Link
-                    key={item.page}
-                    to={createPageUrl(item.page)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
-                      currentPageName === item.page
-                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                        : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
-                    }`}
-                  >
-                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
-                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
-                      {item.name}
-                    </span>
-                  </Link>
-                ))}
+                {currentUser && authRequiredItems
+                  .filter((item) => item.page !== 'MyAudios')
+                  .map((item) => (
+                    <Link
+                      key={item.page}
+                      to={createPageUrl(item.page)}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
+                        currentPageName === item.page
+                          ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
+                          : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                      }`}
+                    >
+                      <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
+                      <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  ))}
 
                 <Link
                   to={createPageUrl('GroupChat')}
@@ -700,9 +715,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </nav>
 
-      <main
-        className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0B3A4A] via-[#061F2B] to-[#030B10]"
-      >
+      <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0B3A4A] via-[#061F2B] to-[#030B10]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.22),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(56,189,248,0.14),transparent_60%)]" />
         <div className="relative z-10">
           {children}
