@@ -18,10 +18,17 @@ import {
   Users,
   Radio,
   Video,
-  Disc3
+  Disc3,
+  Headphones,
+  Mic2,
+  ArrowRight,
+  Play,
+  Music,
+  Waves
 } from "lucide-react";
 
 export default function Home() {
+
   const { user: currentUser, isAuthenticated } = useAuth();
   const [filter] = useState("all");
 
@@ -39,7 +46,7 @@ export default function Home() {
       } catch {
         return [];
       }
-    },
+    }
   });
 
   const { data: videos = [], isLoading, refetch } = useQuery({
@@ -50,237 +57,283 @@ export default function Home() {
       } catch {
         return [];
       }
-    },
+    }
   });
 
   const featuredVideos = useMemo(() => videos.slice(0, 6), [videos]);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
 
-      {/* HERO */}
-      <section className="w-full px-4 md:px-6 lg:px-8 pt-6 md:pt-10 pb-6 md:pb-10">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <div className="rounded-3xl overflow-hidden border border-cyan-500/20 bg-black/30 shadow-2xl">
-
-            <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/66c9f4923_banner.jpg"
-              alt="Team Desvelados LLDM"
-              className="w-full h-auto max-h-[520px] object-cover"
-            />
-
-            <div className="px-4 md:px-8 py-5 md:py-8 text-center">
-
-              <p className="text-cyan-400 text-base md:text-2xl font-bold mb-4 md:mb-6">
-                Celebrando 100 años de esperanza, fe y salvación LLDM
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center gap-3">
-
-                <ShareButton />
-
-                <Link to={createPageUrl("Radio")}>
-                  <Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
-                    <Radio className="w-4 h-4 mr-2" />
-                    Escuchar Radio
-                  </Button>
-                </Link>
-
-                <Link to={createPageUrl("Videos")}>
-                  <Button
-                    variant="outline"
-                    className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
-                  >
-                    <Video className="w-4 h-4 mr-2" />
-                    Ver Videos
-                  </Button>
-                </Link>
-
-                <Link to={createPageUrl("MyAudios")}>
-                  <Button
-                    variant="outline"
-                    className="border-emerald-400 text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
-                  >
-                    <Disc3 className="w-4 h-4 mr-2" />
-                    LLDMPlay
-                  </Button>
-                </Link>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+<div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
 
 
-      {/* RADIO + BIENVENIDA */}
-      <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+{/* HERO */}
+<section className="w-full px-4 md:px-6 lg:px-8 pt-6 md:pt-10 pb-6 md:pb-10">
 
-        <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6">
+<div className="w-full max-w-[1600px] mx-auto">
 
-          {/* RADIO PLAYER */}
-          <Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
-                <Radio className="w-5 h-5" />
-                Radio Team Desvelados 24/7
-              </CardTitle>
-            </CardHeader>
+<div className="rounded-3xl overflow-hidden border border-cyan-500/20 bg-black/30 shadow-2xl">
 
-            <CardContent>
+<img
+src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/66c9f4923_banner.jpg"
+alt="Team Desvelados LLDM"
+className="w-full h-auto max-h-[520px] object-cover"
+/>
 
-              <iframe
-                src="https://radio.team-desveladoslldm.com/public/tdv_lldm/embed"
-                width="100%"
-                height="200"
-                frameBorder="0"
-                allow="autoplay"
-                className="rounded-xl"
-              />
+<div className="px-4 md:px-8 py-5 md:py-8 text-center">
 
-            </CardContent>
-          </Card>
+<p className="text-cyan-400 text-base md:text-2xl font-bold mb-4 md:mb-6">
+Celebrando 100 años de esperanza, fe y salvación LLDM
+</p>
 
+<div className="flex flex-wrap items-center justify-center gap-3">
 
-          {/* BIENVENIDA */}
-          <Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
+<ShareButton />
 
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
-                <Sparkles className="w-5 h-5" />
-                Bienvenido a Team Desvelados LLDM
-              </CardTitle>
-            </CardHeader>
+<Link to={createPageUrl("Radio")}>
+<Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
+<Radio className="w-4 h-4 mr-2"/>
+Escuchar Radio
+</Button>
+</Link>
 
-            <CardContent className="space-y-4">
+<Link to={createPageUrl("Videos")}>
+<Button
+variant="outline"
+className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
+>
+<Video className="w-4 h-4 mr-2"/>
+Ver Videos
+</Button>
+</Link>
 
-              <p className="text-sm md:text-base text-slate-200 leading-relaxed">
-                Disfruta nuestra radio 24/7, videos y LLDMPlay para convivir con la comunidad.
-              </p>
+<Link to={createPageUrl("MyAudios")}>
+<Button
+variant="outline"
+className="border-emerald-400 text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
+>
+<Disc3 className="w-4 h-4 mr-2"/>
+LLDMPlay
+</Button>
+</Link>
 
-              {safeUser ? (
-
-                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
-                  <p className="text-sm text-cyan-300">
-                    Sesión iniciada como{" "}
-                    <span className="font-bold text-white">
-                      {safeUser?.name || safeUser?.email || "Usuario"}
-                    </span>
-                  </p>
-                </div>
-
-              ) : (
-
-                <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/60 px-4 py-4">
-
-                  <p className="text-sm text-slate-200 mb-3">
-                    Inicia sesión para acceder a chats y subir contenido.
-                  </p>
-
-                  <Link to={createPageUrl("Login")}>
-                    <Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
-                      <Users className="w-4 h-4 mr-2" />
-                      Iniciar Sesión
-                    </Button>
-                  </Link>
-
-                </div>
-
-              )}
-
-            </CardContent>
-
-          </Card>
-
-        </div>
-
-      </section>
+</div>
+</div>
+</div>
+</div>
+</section>
 
 
-      {/* STREAMS */}
-      <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <FeaturedStreams />
-        </div>
-      </section>
+{/* RADIO + BIENVENIDA */}
+
+<section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+
+<div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+<Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
+
+<CardHeader>
+<CardTitle className="flex items-center gap-2 text-cyan-400">
+<Radio className="w-5 h-5"/>
+Radio Team Desvelados 24/7
+</CardTitle>
+</CardHeader>
+
+<CardContent>
+
+<iframe
+src="https://radio.team-desveladoslldm.com/public/tdv_lldm-christian_radio/embed?theme=dark"
+width="100%"
+height="180"
+frameBorder="0"
+allow="autoplay"
+className="rounded-xl"
+/>
+
+</CardContent>
+</Card>
 
 
-      {/* VIDEOS */}
-      <section className="w-full px-4 md:px-6 lg:px-8 pb-24 md:pb-10">
+<Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
 
-        <div className="w-full max-w-[1600px] mx-auto">
+<CardHeader>
+<CardTitle className="flex items-center gap-2 text-cyan-400">
+<Sparkles className="w-5 h-5"/>
+Bienvenido a Team Desvelados LLDM
+</CardTitle>
+</CardHeader>
 
-          <div className="flex items-center justify-between gap-4 mb-5 md:mb-6">
-            <h2 className="text-cyan-400 text-xl md:text-2xl font-bold">
-              Videos recientes
-            </h2>
+<CardContent className="space-y-4">
 
-            <Link to={createPageUrl("Videos")}>
-              <Button
-                variant="outline"
-                className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
-              >
-                Ver todos
-              </Button>
-            </Link>
-          </div>
+<p className="text-sm md:text-base text-slate-200 leading-relaxed">
+Disfruta nuestra radio 24/7, videos y LLDMPlay para convivir con la comunidad.
+</p>
+
+{safeUser ? (
+
+<div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
+<p className="text-sm text-cyan-300">
+Sesión iniciada como
+<span className="font-bold text-white ml-1">
+{safeUser?.name || safeUser?.email || "Usuario"}
+</span>
+</p>
+</div>
+
+) : (
+
+<div className="rounded-2xl border border-cyan-500/20 bg-slate-900/60 px-4 py-4">
+
+<p className="text-sm text-slate-200 mb-3">
+Inicia sesión para acceder a chats y subir contenido.
+</p>
+
+<Link to={createPageUrl("Login")}>
+<Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
+<Users className="w-4 h-4 mr-2"/>
+Iniciar Sesión
+</Button>
+</Link>
+
+</div>
+
+)}
+
+</CardContent>
+
+</Card>
+
+</div>
+
+</section>
 
 
-          {isLoading ? (
+{/* STREAMS */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 md:gap-6">
+<section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+<div className="w-full max-w-[1600px] mx-auto">
+<FeaturedStreams/>
+</div>
+</section>
 
-              {Array(6)
-                .fill(0)
-                .map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-[9/16] rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))}
 
-            </div>
+{/* LLDMPLAY */}
 
-          ) : featuredVideos.length > 0 ? (
+<section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 md:gap-6">
+<div className="w-full max-w-[1600px] mx-auto">
 
-              {featuredVideos.map((video) => (
-                <VideoCard
-                  key={video.id}
-                  video={video}
-                  currentUser={safeUser}
-                  onLikeUpdate={refetch}
-                />
-              ))}
+<div className="rounded-3xl border border-emerald-400/20 bg-black/40 p-8">
 
-            </div>
+<div className="flex items-center gap-3 mb-4">
 
-          ) : (
+<Headphones className="w-6 h-6 text-emerald-400"/>
 
-            <Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
-              <CardContent className="py-10 text-center">
+<h2 className="text-3xl font-bold">
+LLDMPlay
+</h2>
 
-                <p className="text-slate-300 mb-4">
-                  Aún no hay videos disponibles.
-                </p>
+</div>
 
-                <Link to={createPageUrl("Videos")}>
-                  <Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
-                    Ir a Videos
-                  </Button>
-                </Link>
+<p className="text-slate-200 mb-6">
+Predicaciones, cantos LLDM, instrumental, testimonios, podcast y contenido espiritual.
+</p>
 
-              </CardContent>
-            </Card>
+<Link to={createPageUrl("MyAudios")}>
 
-          )}
+<Button className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl">
+<Disc3 className="w-4 h-4 mr-2"/>
+Entrar a LLDMPlay
+</Button>
 
-        </div>
+</Link>
 
-      </section>
+</div>
 
-    </div>
-  );
+</div>
+
+</section>
+
+
+{/* VIDEOS */}
+
+<section className="w-full px-4 md:px-6 lg:px-8 pb-24 md:pb-10">
+
+<div className="w-full max-w-[1600px] mx-auto">
+
+<div className="flex items-center justify-between gap-4 mb-5 md:mb-6">
+
+<h2 className="text-cyan-400 text-xl md:text-2xl font-bold">
+Videos recientes
+</h2>
+
+<Link to={createPageUrl("Videos")}>
+<Button
+variant="outline"
+className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
+>
+Ver todos
+</Button>
+</Link>
+
+</div>
+
+
+{isLoading ? (
+
+<div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 md:gap-6">
+
+{Array(6).fill(0).map((_,i)=>(
+<div key={i} className="space-y-3">
+<Skeleton className="aspect-[9/16] rounded-2xl"/>
+<Skeleton className="h-4 w-3/4"/>
+<Skeleton className="h-4 w-1/2"/>
+</div>
+))}
+
+</div>
+
+) : featuredVideos.length > 0 ? (
+
+<div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 md:gap-6">
+
+{featuredVideos.map(video=>(
+<VideoCard
+key={video.id}
+video={video}
+currentUser={safeUser}
+onLikeUpdate={refetch}
+/>
+))}
+
+</div>
+
+) : (
+
+<Card className="bg-[#111827]/90 border-cyan-500/20 text-white rounded-3xl">
+
+<CardContent className="py-10 text-center">
+
+<p className="text-slate-300 mb-4">
+Aún no hay videos disponibles.
+</p>
+
+<Link to={createPageUrl("Videos")}>
+<Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
+Ir a Videos
+</Button>
+</Link>
+
+</CardContent>
+
+</Card>
+
+)}
+
+</div>
+</section>
+
+
+</div>
+);
 }
