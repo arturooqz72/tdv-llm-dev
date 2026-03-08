@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 
 const categoryLabels = {
@@ -27,24 +28,22 @@ const categoryLabels = {
 };
 
 export default function MyAudios() {
-  const { user: currentUser, isLoadingAuth } = useAuth();
+  const auth = useAuth();
+  const currentUser = auth?.user || null;
+  const isLoadingAuth = auth?.isLoadingAuth || false;
 
   const [audios, setAudios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploader, setShowUploader] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(null);
   const [workingId, setWorkingId] = useState(null);
+  const [pageError, setPageError] = useState("");
 
   const isAdmin = currentUser?.role === "admin";
 
   const loadAudios = async () => {
-    if (!currentUser?.email) {
-      setAudios([]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
+    setPageError("");
 
     try {
       let query = supabase
@@ -52,20 +51,18 @@ export default function MyAudios() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!isAdmin) {
+      if (currentUser?.email && !isAdmin) {
         query = query.eq("created_by", currentUser.email);
       }
 
       const { data, error } = await query;
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setAudios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error cargando audios:", error);
-      alert(`Error cargando audios: ${error.message}`);
+      setPageError(error?.message || "No se pudieron cargar los audios.");
     } finally {
       setLoading(false);
     }
@@ -75,7 +72,7 @@ export default function MyAudios() {
     if (!isLoadingAuth) {
       loadAudios();
     }
-  }, [currentUser?.email, currentUser?.role, isLoadingAuth]);
+  }, [isLoadingAuth, currentUser?.email, currentUser?.role]);
 
   const handleTogglePlay = (audio) => {
     if (!audio || playingAudio?.id === audio.id) {
@@ -97,9 +94,7 @@ export default function MyAudios() {
 
       const { error } = await supabase.from("audios").delete().eq("id", audio.id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       await loadAudios();
     } catch (error) {
@@ -119,9 +114,7 @@ export default function MyAudios() {
         .update({ is_active: !audio.is_active })
         .eq("id", audio.id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       await loadAudios();
     } catch (error) {
@@ -140,32 +133,6 @@ export default function MyAudios() {
     };
   }, [audios]);
 
-  if (isLoadingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!currentUser?.email) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <Card className="bg-gray-900 border-yellow-600 max-w-md w-full">
-          <CardContent className="p-8 text-center">
-            <Music className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-white text-xl font-bold mb-2">
-              Inicia sesión para ver tus audios
-            </h2>
-            <p className="text-gray-400">
-              Necesitas entrar a tu cuenta para subir y administrar tus audios.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
@@ -178,9 +145,9 @@ export default function MyAudios() {
               {isAdmin ? "Todos los Audios" : "Mis Audios"}
             </h1>
             <p className="text-gray-400 text-sm">
-              {isAdmin
-                ? "Gestiona todos los audios guardados en el sistema"
-                : "Sube, edita y reproduce tus audios"}
+              {currentUser?.email
+                ? "Sube, edita y reproduce tus audios"
+                : "Vista de audios conectada a Supabase"}
             </p>
           </div>
         </div>
@@ -204,6 +171,24 @@ export default function MyAudios() {
           </Button>
         </div>
       </div>
+
+      {!currentUser?.email && !isLoadingAuth && (
+        <Card className="bg-yellow-900/20 border-yellow-600 mb-6">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
+              <div>
+                <p className="text-white font-semibold">
+                  No se detectó usuario en esta página
+                </p>
+                <p className="text-gray-300 text-sm mt-1">
+                  Aun así puedes probar si Supabase está leyendo datos.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="bg-gray-900/70 border-gray-700">
@@ -240,7 +225,16 @@ export default function MyAudios() {
         </div>
       )}
 
-      {loading ? (
+      {pageError ? (
+        <Card className="bg-red-900/20 border-red-600">
+          <CardContent className="p-6">
+            <p className="text-red-300 font-semibold mb-2">
+              Error cargando audios
+            </p>
+            <p className="text-gray-200 text-sm">{pageError}</p>
+          </CardContent>
+        </Card>
+      ) : loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
         </div>
