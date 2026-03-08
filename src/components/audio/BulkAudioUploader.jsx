@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,34 +25,52 @@ const AUDIO_CATEGORIES = [
   { value: "other", label: "Otro" },
 ];
 
+const ACCEPTED_EXTENSIONS = [
+  ".mp3",
+  ".wav",
+  ".m4a",
+  ".aac",
+  ".ogg",
+  ".mp4",
+];
+
+const MAX_FILE_SIZE_MB = 200;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const STORAGE_BUCKET = "audios";
+
 function getCategoryLabel(value) {
   return (
     AUDIO_CATEGORIES.find((item) => item.value === value)?.label || "Otro"
   );
 }
 
+function sanitizeFileName(name) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w.\-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function getExtension(fileName = "") {
+  const match = fileName.toLowerCase().match(/\.[^.]+$/);
+  return match ? match[0] : "";
+}
+
+function getBaseName(fileName = "") {
+  return fileName.replace(/\.[^/.]+$/, "");
+}
+
 export default function BulkAudioUploader({ onSuccess, currentUser }) {
+  const fileInputRef = useRef(null);
+
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editForm, setEditForm] = useState(null);
-
-  useEffect(() => {
-    const existingScript = document.querySelector(
-      'script[src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"]'
-    );
-
-    if (existingScript) return;
-
-    const script = document.createElement("script");
-    script.src = "https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {};
-  }, []);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -63,94 +81,72 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
     setDragging(false);
   };
 
+  const processSelectedFiles = (fileList) => {
+    const selectedFiles = Array.from(fileList || []);
+
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const validFiles = [];
+    const rejectedFiles = [];
+
+    for (const file of selectedFiles) {
+      const extension = getExtension(file.name);
+
+      if (!ACCEPTED_EXTENSIONS.includes(extension)) {
+        rejectedFiles.push(
+          `${file.name}: tipo no permitido (${extension || "sin extensión"})`
+        );
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        rejectedFiles.push(
+          `${file.name}: excede el máximo de ${MAX_FILE_SIZE_MB} MB`
+        );
+        continue;
+      }
+
+      validFiles.push({
+        localFile: file,
+        original_name: file.name,
+        title: getBaseName(file.name),
+        description: "",
+        category: "sermon",
+        audio_url: "",
+        file_size_mb: Number((file.size / (1024 * 1024)).toFixed(2)),
+        is_active: true,
+      });
+    }
+
+    if (validFiles.length > 0) {
+      setFiles((prev) => [...prev, ...validFiles]);
+    }
+
+    if (rejectedFiles.length > 0) {
+      alert(
+        `Algunos archivos no se pudieron agregar:\n\n${rejectedFiles.join("\n")}`
+      );
+    }
+
+    if (validFiles.length > 0 && rejectedFiles.length === 0) {
+      alert(`✓ ${validFiles.length} audio(s) agregado(s) correctamente.`);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleDrop = (e) => {
     e.preventDefault();
     setDragging(false);
-    handleFileSelect();
+    processSelectedFiles(e.dataTransfer.files);
   };
 
   const handleFileSelect = () => {
-    openUploadcareMultiple((filesData) => {
-      uploadFilesFromUrls(filesData);
-    });
-  };
-
-  const openUploadcareMultiple = (callback) => {
-    if (!window.uploadcare) {
-      alert(
-        "Uploadcare todavía está cargando. Espera un momento e inténtalo de nuevo."
-      );
-      return;
-    }
-
-    const widget = window.uploadcare.openDialog(null, {
-      publicKey: "d6edf1496c801ed26b07",
-      multiple: true,
-      imagesOnly: false,
-    });
-
-    widget.done((result) => {
-      const filesList = result.files();
-
-      if (!filesList || filesList.length === 0) {
-        alert("No se seleccionaron archivos.");
-        return;
-      }
-
-      const filePromises = filesList.map((fileInfo) => {
-        return new Promise((resolve) => {
-          fileInfo
-            .done((file) => {
-              resolve({
-                url: file.cdnUrl,
-                name: file.name,
-                size: file.size || 0,
-              });
-            })
-            .fail(() => resolve(null));
-        });
-      });
-
-      Promise.all(filePromises).then((resolvedFiles) => {
-        const validFiles = resolvedFiles.filter(Boolean);
-        callback(validFiles);
-      });
-    });
-  };
-
-  const uploadFilesFromUrls = async (filesData) => {
-    if (!filesData || filesData.length === 0) {
-      alert("No se seleccionaron archivos.");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const newFiles = filesData.map((fileData) => {
-        const fileName = (fileData.name || "Audio sin nombre").replace(
-          /\.[^/.]+$/,
-          ""
-        );
-
-        return {
-          title: fileName,
-          description: "",
-          category: "sermon",
-          audio_url: fileData.url,
-          file_size_mb: Number(((fileData.size || 0) / (1024 * 1024)).toFixed(2)),
-          is_active: true,
-        };
-      });
-
-      setFiles((prev) => [...prev, ...newFiles]);
-      alert(`✓ ${newFiles.length} audio(s) agregado(s) correctamente.`);
-    } catch (error) {
-      console.error(error);
-      alert("Error al preparar los audios.");
-    } finally {
-      setUploading(false);
-    }
+    fileInputRef.current?.click();
   };
 
   const removeFile = (index) => {
@@ -175,6 +171,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
 
     const updated = [...files];
     updated[editingIndex] = {
+      ...updated[editingIndex],
       ...editForm,
       title: editForm.title.trim(),
       description: editForm.description?.trim() || "",
@@ -182,6 +179,57 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
 
     setFiles(updated);
     cancelEdit();
+  };
+
+  const uploadOneFileToSupabase = async (fileEntry) => {
+    const file = fileEntry.localFile;
+
+    if (!file) {
+      throw new Error(`No se encontró el archivo local para "${fileEntry.title}".`);
+    }
+
+    const extension = getExtension(file.name) || ".mp3";
+    const safeOriginalName = sanitizeFileName(getBaseName(file.name) || "audio");
+    const safeTitle = sanitizeFileName(fileEntry.title || safeOriginalName || "audio");
+    const userFolder = sanitizeFileName(
+      currentUser?.email || currentUser?.id || "admin"
+    );
+
+    const filePath = `${userFolder}/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}-${safeTitle || safeOriginalName}${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    const audioUrl = publicUrlData?.publicUrl;
+
+    if (!audioUrl) {
+      throw new Error(`No se pudo obtener la URL pública de "${fileEntry.title}".`);
+    }
+
+    return {
+      title: fileEntry.title.trim(),
+      description: fileEntry.description?.trim() || "",
+      category: fileEntry.category || "other",
+      audio_url: audioUrl,
+      file_size_mb: fileEntry.file_size_mb || 0,
+      is_active:
+        typeof fileEntry.is_active === "boolean" ? fileEntry.is_active : true,
+      created_by: currentUser?.email || "admin",
+    };
   };
 
   const saveAllAudios = async () => {
@@ -193,15 +241,12 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
     setSaving(true);
 
     try {
-      const payload = files.map((file) => ({
-        title: file.title.trim(),
-        description: file.description?.trim() || "",
-        category: file.category || "other",
-        audio_url: file.audio_url,
-        file_size_mb: file.file_size_mb || 0,
-        is_active: typeof file.is_active === "boolean" ? file.is_active : true,
-        created_by: currentUser?.email || "admin",
-      }));
+      const payload = [];
+
+      for (const fileEntry of files) {
+        const savedAudio = await uploadOneFileToSupabase(fileEntry);
+        payload.push(savedAudio);
+      }
 
       const { error } = await supabase.from("audios").insert(payload);
 
@@ -210,14 +255,18 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
       }
 
       setFiles([]);
-      alert("✓ Audios guardados correctamente.");
+      alert("✓ Audios subidos y guardados correctamente.");
 
       if (onSuccess) {
-        onSuccess();
+        await onSuccess();
       }
     } catch (error) {
       console.error("Error guardando audios:", error);
-      alert(`Error al guardar audios: ${error.message}`);
+      alert(
+        `Error al subir o guardar audios: ${
+          error?.message || "Ocurrió un error inesperado."
+        }`
+      );
     } finally {
       setSaving(false);
     }
@@ -225,6 +274,15 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
 
   return (
     <div className="space-y-6">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept={ACCEPTED_EXTENSIONS.join(",")}
+        className="hidden"
+        onChange={(e) => processSelectedFiles(e.target.files)}
+      />
+
       <Card className="bg-cyan-900/30 border-cyan-500">
         <CardContent className="p-4">
           <h3 className="text-white font-bold mb-2">Cómo funciona</h3>
@@ -236,6 +294,11 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
             <li>5. Activa o desactiva cada audio</li>
             <li>6. Haz clic en "GUARDAR TODO"</li>
           </ol>
+          <div className="mt-3 text-xs text-cyan-200 space-y-1">
+            <p>Formatos permitidos: MP3, WAV, M4A, AAC, OGG, MP4</p>
+            <p>Tamaño máximo por archivo: {MAX_FILE_SIZE_MB} MB</p>
+            <p>Los archivos se guardan directo en Supabase Storage.</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -280,7 +343,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
 
               <Button
                 type="button"
-                disabled={uploading}
+                disabled={uploading || saving}
                 className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold"
                 onClick={handleFileSelect}
               >
@@ -289,7 +352,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
               </Button>
 
               <p className="text-xs text-gray-500 mt-4">
-                MP3, WAV, M4A, AAC, OGG
+                MP3, WAV, M4A, AAC, OGG, MP4 · máximo {MAX_FILE_SIZE_MB} MB
               </p>
             </div>
           </CardContent>
@@ -330,7 +393,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
 
                 <Button
                   onClick={handleFileSelect}
-                  disabled={uploading}
+                  disabled={uploading || saving}
                   variant="outline"
                   className="border-cyan-500 text-cyan-400"
                 >
@@ -364,7 +427,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
                 <tbody>
                   {files.map((file, index) => (
                     <tr
-                      key={`${file.audio_url}-${index}`}
+                      key={`${file.original_name}-${index}`}
                       className="border-b border-gray-700/50 hover:bg-gray-700/30"
                     >
                       <td className="py-3 text-white">{file.title}</td>
