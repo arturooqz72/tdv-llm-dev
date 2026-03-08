@@ -127,6 +127,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Trivia Admin', icon: Shield, page: 'AdminTrivia' },
         { name: 'Roles', icon: Users, page: 'RoleManagement' },
         { name: 'Audios', icon: Music, page: 'AudioManager' },
+        { name: 'Mis Audios', icon: Music, page: 'MyAudios' },
         { name: 'Videos Admin', icon: Shield, page: 'AdminVideos' },
         { name: 'Programas', icon: Music, page: 'AllPrograms' }
       ]
