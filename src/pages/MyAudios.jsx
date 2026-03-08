@@ -1,367 +1,595 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/lib/AuthContext";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import BulkAudioUploader from "@/components/audio/BulkAudioUploader";
-import AudioPlayerBar from "@/components/audio/AudioPlayerBar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
+  Search,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  Repeat,
+  Shuffle,
   Music,
-  Loader2,
-  Trash2,
-  Upload,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  AlertCircle,
 } from "lucide-react";
 
-const categoryLabels = {
-  sermon: "Sermón",
-  worship: "Adoración",
-  prayer: "Oración",
-  meditation: "Meditación",
-  podcast: "Podcast",
-  music: "Música",
-  other: "Otro",
-};
+const CATEGORY_ORDER = [
+  "Predicaciones",
+  "Cantos LLDM",
+  "Instrumental",
+  "Testimonios",
+  "Podcast",
+  "Debates",
+  "Temas",
+  "Otros",
+];
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function normalizeCategory(category) {
+  if (!category) return "Otros";
+  const value = String(category).trim();
+
+  const match = CATEGORY_ORDER.find(
+    (item) => item.toLowerCase() === value.toLowerCase()
+  );
+
+  return match || "Otros";
+}
+
+function shuffleArray(array, currentItemId = null) {
+  const copy = [...array];
+
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  if (currentItemId && copy.length > 1) {
+    const currentIndex = copy.findIndex((item) => item.id === currentItemId);
+    if (currentIndex > 0) {
+      [copy[0], copy[currentIndex]] = [copy[currentIndex], copy[0]];
+    }
+  }
+
+  return copy;
+}
 
 export default function MyAudios() {
-  const auth = useAuth();
-  const currentUser = auth?.user || null;
-  const isLoadingAuth = auth?.isLoadingAuth || false;
+  const audioRef = useRef(null);
 
-  const [audios, setAudios] = useState([]);
+  const [allAudios, setAllAudios] = useState([]);
+  const [displayList, setDisplayList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showUploader, setShowUploader] = useState(false);
-  const [playingAudio, setPlayingAudio] = useState(null);
-  const [workingId, setWorkingId] = useState(null);
-  const [pageError, setPageError] = useState("");
+  const [error, setError] = useState("");
 
-  const isAdmin = currentUser?.role === "admin";
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todas");
 
-  const loadAudios = async () => {
-    setLoading(true);
-    setPageError("");
+  const [currentAudioId, setCurrentAudioId] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [repeatMode, setRepeatMode] = useState(false);
+  const [shuffleMode, setShuffleMode] = useState(false);
 
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [volume, setVolume] = useState(1);
+
+  useEffect(() => {
+    loadAudios();
+  }, []);
+
+  async function loadAudios() {
     try {
-      let query = supabase
+      setLoading(true);
+      setError("");
+
+      const { data, error } = await supabase
         .from("audios")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (currentUser?.email && !isAdmin) {
-        query = query.eq("created_by", currentUser.email);
-      }
-
-      const { data, error } = await query;
+        .select("id, title, description, category, audio_url, is_active, file_size_mb")
+        .eq("is_active", true);
 
       if (error) throw error;
 
-      setAudios(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error cargando audios:", error);
-      setPageError(error?.message || "No se pudieron cargar los audios.");
+      const cleaned = (data || [])
+        .filter((item) => item.audio_url)
+        .map((item) => ({
+          ...item,
+          category: normalizeCategory(item.category),
+        }))
+        .sort((a, b) => {
+          const aIndex = CATEGORY_ORDER.indexOf(a.category);
+          const bIndex = CATEGORY_ORDER.indexOf(b.category);
+          if (aIndex !== bIndex) return aIndex - bIndex;
+
+          const aTitle = (a.title || "").toLowerCase();
+          const bTitle = (b.title || "").toLowerCase();
+          return aTitle.localeCompare(bTitle);
+        });
+
+      setAllAudios(cleaned);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "No se pudieron cargar los audios.");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  const filteredAudios = useMemo(() => {
+    let result = [...allAudios];
+
+    if (selectedCategory !== "Todas") {
+      result = result.filter((audio) => audio.category === selectedCategory);
+    }
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+
+      result = result.filter((audio) => {
+        const title = audio.title?.toLowerCase() || "";
+        const description = audio.description?.toLowerCase() || "";
+        const category = audio.category?.toLowerCase() || "";
+
+        return (
+          title.includes(q) ||
+          description.includes(q) ||
+          category.includes(q)
+        );
+      });
+    }
+
+    return result;
+  }, [allAudios, selectedCategory, search]);
 
   useEffect(() => {
-    if (!isLoadingAuth) {
-      loadAudios();
-    }
-  }, [isLoadingAuth, currentUser?.email, currentUser?.role]);
+    const currentId = currentAudioId;
 
-  const handleTogglePlay = (audio) => {
-    if (!audio || playingAudio?.id === audio.id) {
-      setPlayingAudio(null);
+    if (shuffleMode) {
+      setDisplayList(shuffleArray(filteredAudios, currentId));
     } else {
-      setPlayingAudio(audio);
+      setDisplayList(filteredAudios);
     }
-  };
+  }, [filteredAudios, shuffleMode, currentAudioId]);
 
-  const handleDelete = async (audio) => {
-    if (!window.confirm(`¿Estás seguro de eliminar "${audio.title}"?`)) return;
+  const currentIndex = useMemo(() => {
+    return displayList.findIndex((audio) => audio.id === currentAudioId);
+  }, [displayList, currentAudioId]);
 
-    try {
-      setWorkingId(audio.id);
+  const currentAudio =
+    currentIndex >= 0 && currentIndex < displayList.length
+      ? displayList[currentIndex]
+      : null;
 
-      if (playingAudio?.id === audio.id) {
-        setPlayingAudio(null);
+  useEffect(() => {
+    if (!displayList.length) {
+      setCurrentAudioId(null);
+      setIsPlaying(false);
+      return;
+    }
+
+    if (currentAudioId && displayList.some((item) => item.id === currentAudioId)) {
+      return;
+    }
+
+    setCurrentAudioId(displayList[0].id);
+    setIsPlaying(false);
+  }, [displayList, currentAudioId]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentAudio?.audio_url) return;
+
+    audio.src = currentAudio.audio_url;
+    audio.load();
+    setCurrentTime(0);
+    setDuration(0);
+
+    if (isPlaying) {
+      audio.play().catch((err) => {
+        console.error("Error al reproducir:", err);
+        setIsPlaying(false);
+      });
+    }
+  }, [currentAudio]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentAudio) return;
+
+    if (isPlaying) {
+      audio.play().catch((err) => {
+        console.error("Error al reproducir:", err);
+        setIsPlaying(false);
+      });
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, currentAudio]);
+
+  function playAudioById(audioId) {
+    setCurrentAudioId(audioId);
+    setIsPlaying(true);
+  }
+
+  function togglePlayPause() {
+    if (!displayList.length) return;
+
+    if (!currentAudio && displayList[0]) {
+      setCurrentAudioId(displayList[0].id);
+      setIsPlaying(true);
+      return;
+    }
+
+    setIsPlaying((prev) => !prev);
+  }
+
+  function playNext() {
+    if (!displayList.length) return;
+
+    if (!currentAudio) {
+      setCurrentAudioId(displayList[0].id);
+      setIsPlaying(true);
+      return;
+    }
+
+    if (repeatMode) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
       }
-
-      const { error } = await supabase.from("audios").delete().eq("id", audio.id);
-
-      if (error) throw error;
-
-      await loadAudios();
-    } catch (error) {
-      console.error("Error eliminando audio:", error);
-      alert(`Error eliminando audio: ${error.message}`);
-    } finally {
-      setWorkingId(null);
+      return;
     }
-  };
 
-  const handleToggleActive = async (audio) => {
-    try {
-      setWorkingId(audio.id);
+    const nextIndex = currentIndex + 1;
 
-      const { error } = await supabase
-        .from("audios")
-        .update({ is_active: !audio.is_active })
-        .eq("id", audio.id);
-
-      if (error) throw error;
-
-      await loadAudios();
-    } catch (error) {
-      console.error("Error actualizando audio:", error);
-      alert(`Error actualizando audio: ${error.message}`);
-    } finally {
-      setWorkingId(null);
+    if (nextIndex < displayList.length) {
+      setCurrentAudioId(displayList[nextIndex].id);
+      setIsPlaying(true);
+    } else {
+      setCurrentAudioId(displayList[0].id);
+      setIsPlaying(true);
     }
-  };
+  }
 
-  const totals = useMemo(() => {
-    return {
-      total: audios.length,
-      active: audios.filter((a) => a.is_active).length,
-      inactive: audios.filter((a) => !a.is_active).length,
-    };
-  }, [audios]);
+  function playPrev() {
+    if (!displayList.length) return;
+
+    if (!currentAudio) {
+      setCurrentAudioId(displayList[0].id);
+      setIsPlaying(true);
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (audio && audio.currentTime > 5) {
+      audio.currentTime = 0;
+      return;
+    }
+
+    const prevIndex = currentIndex - 1;
+
+    if (prevIndex >= 0) {
+      setCurrentAudioId(displayList[prevIndex].id);
+      setIsPlaying(true);
+    } else {
+      setCurrentAudioId(displayList[displayList.length - 1].id);
+      setIsPlaying(true);
+    }
+  }
+
+  function onEnded() {
+    if (repeatMode) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+      return;
+    }
+
+    playNext();
+  }
+
+  function handleProgressChange(e) {
+    const value = Number(e.target.value);
+    setCurrentTime(value);
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = value;
+    }
+  }
+
+  function toggleShuffle() {
+    setShuffleMode((prev) => !prev);
+  }
+
+  function toggleRepeat() {
+    setRepeatMode((prev) => !prev);
+  }
+
+  const categoriesWithCounts = useMemo(() => {
+    return CATEGORY_ORDER.map((category) => ({
+      name: category,
+      count: allAudios.filter((audio) => audio.category === category).length,
+    }));
+  }, [allAudios]);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-            <Music className="w-6 h-6 text-cyan-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {isAdmin ? "Todos los Audios" : "Mis Audios"}
-            </h1>
-            <p className="text-gray-400 text-sm">
-              {currentUser?.email
-                ? "Sube, edita y reproduce tus audios"
-                : "Vista de audios conectada a Supabase"}
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white pb-44">
+      <audio
+        ref={audioRef}
+        onLoadedMetadata={() => {
+          const audio = audioRef.current;
+          if (audio) setDuration(audio.duration || 0);
+        }}
+        onTimeUpdate={() => {
+          const audio = audioRef.current;
+          if (audio) setCurrentTime(audio.currentTime || 0);
+        }}
+        onEnded={onEnded}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-12 w-12 rounded-2xl bg-green-500/20 flex items-center justify-center">
+              <Music className="w-6 h-6 text-green-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Mis Audios</h1>
+              <p className="text-zinc-400 text-sm">
+                Reproductor tipo playlist para Team Desvelados
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            onClick={loadAudios}
-            variant="outline"
-            className="border-cyan-500 text-cyan-400"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refrescar
-          </Button>
-
-          <Button
-            onClick={() => setShowUploader((prev) => !prev)}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            {showUploader ? "Ocultar Subida" : "Subir Audios"}
-          </Button>
-        </div>
-      </div>
-
-      {!currentUser?.email && !isLoadingAuth && (
-        <Card className="bg-yellow-900/20 border-yellow-600 mb-6">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
-              <div>
-                <p className="text-white font-semibold">
-                  No se detectó usuario en esta página
-                </p>
-                <p className="text-gray-300 text-sm mt-1">
-                  Aun así puedes probar si Supabase está leyendo datos.
-                </p>
+        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+          <aside className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 h-fit">
+            <div className="mb-4">
+              <label className="text-sm text-zinc-300 mb-2 block">Buscar</label>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar audio..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-green-500"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-gray-900/70 border-gray-700">
-          <CardContent className="p-5">
-            <p className="text-sm text-gray-400">Total</p>
-            <p className="text-3xl font-bold text-white">{totals.total}</p>
-          </CardContent>
-        </Card>
+            <div>
+              <label className="text-sm text-zinc-300 mb-3 block">
+                Categorías
+              </label>
 
-        <Card className="bg-gray-900/70 border-green-700">
-          <CardContent className="p-5">
-            <p className="text-sm text-green-400">Activos</p>
-            <p className="text-3xl font-bold text-white">{totals.active}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-900/70 border-gray-700">
-          <CardContent className="p-5">
-            <p className="text-sm text-gray-400">Inactivos</p>
-            <p className="text-3xl font-bold text-white">{totals.inactive}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {showUploader && (
-        <div className="mb-8">
-          <BulkAudioUploader
-            currentUser={currentUser}
-            onSuccess={async () => {
-              setShowUploader(false);
-              await loadAudios();
-            }}
-          />
-        </div>
-      )}
-
-      {pageError ? (
-        <Card className="bg-red-900/20 border-red-600">
-          <CardContent className="p-6">
-            <p className="text-red-300 font-semibold mb-2">
-              Error cargando audios
-            </p>
-            <p className="text-gray-200 text-sm">{pageError}</p>
-          </CardContent>
-        </Card>
-      ) : loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-        </div>
-      ) : audios.length === 0 ? (
-        <div className="text-center py-20 bg-gray-900/50 rounded-2xl border border-gray-700">
-          <Music className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400">Todavía no hay audios guardados</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {audios.map((audio) => {
-            const isPlaying = playingAudio?.id === audio.id;
-            const isWorking = workingId === audio.id;
-
-            return (
-              <div key={audio.id}>
-                <div
-                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                    isPlaying
-                      ? "bg-cyan-500/10 border-cyan-500/40"
-                      : "bg-gray-900/60 border-gray-700 hover:border-gray-600"
+              <div className="space-y-2">
+                <button
+                  onClick={() => setSelectedCategory("Todas")}
+                  className={`w-full text-left px-3 py-2 rounded-xl transition ${
+                    selectedCategory === "Todas"
+                      ? "bg-green-500 text-black font-semibold"
+                      : "bg-zinc-950 hover:bg-zinc-800 text-zinc-200"
                   }`}
                 >
+                  Todas
+                </button>
+
+                {categoriesWithCounts.map((cat) => (
                   <button
-                    onClick={() => handleTogglePlay(audio)}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
-                      isPlaying
-                        ? "bg-cyan-500 text-black"
-                        : "bg-gray-700 text-white hover:bg-cyan-500 hover:text-black"
+                    key={cat.name}
+                    onClick={() => setSelectedCategory(cat.name)}
+                    className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-xl transition ${
+                      selectedCategory === cat.name
+                        ? "bg-green-500 text-black font-semibold"
+                        : "bg-zinc-950 hover:bg-zinc-800 text-zinc-200"
                     }`}
                   >
-                    <Music className="w-5 h-5" />
+                    <span>{cat.name}</span>
+                    <span className="text-xs opacity-80">{cat.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <section className="bg-zinc-900/70 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 border-b border-zinc-800">
+              <h2 className="text-lg font-semibold">
+                {selectedCategory === "Todas" ? "Todos los audios" : selectedCategory}
+              </h2>
+              <p className="text-sm text-zinc-400 mt-1">
+                {displayList.length} audio{displayList.length === 1 ? "" : "s"} encontrados
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="p-6 text-zinc-400">Cargando audios...</div>
+            ) : error ? (
+              <div className="p-6 text-red-400">{error}</div>
+            ) : displayList.length === 0 ? (
+              <div className="p-6 text-zinc-400">No hay audios disponibles.</div>
+            ) : (
+              <div className="divide-y divide-zinc-800">
+                {displayList.map((audio) => {
+                  const active = currentAudio?.id === audio.id;
+
+                  return (
+                    <div
+                      key={audio.id}
+                      className={`px-4 sm:px-6 py-4 flex items-center gap-4 transition ${
+                        active ? "bg-green-500/10" : "hover:bg-zinc-800/60"
+                      }`}
+                    >
+                      <button
+                        onClick={() => playAudioById(audio.id)}
+                        className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 transition ${
+                          active
+                            ? "bg-green-500 text-black"
+                            : "bg-zinc-800 text-white hover:bg-green-500 hover:text-black"
+                        }`}
+                      >
+                        {active && isPlaying ? (
+                          <Pause className="w-5 h-5" />
+                        ) : (
+                          <Play className="w-5 h-5 ml-0.5" />
+                        )}
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="font-semibold truncate">
+                            {audio.title || "Sin título"}
+                          </h3>
+
+                          <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-300">
+                            {audio.category || "Otros"}
+                          </span>
+
+                          {audio.file_size_mb ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-400">
+                              {audio.file_size_mb} MB
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="text-sm text-zinc-400 line-clamp-2">
+                          {audio.description || "Sin descripción"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-black/95 backdrop-blur-xl z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          {!currentAudio ? (
+            <div className="text-zinc-400 text-sm">
+              Selecciona un audio para empezar a reproducir.
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_220px] items-center">
+              <div className="min-w-0">
+                <p className="font-semibold truncate">
+                  {currentAudio.title || "Sin título"}
+                </p>
+                <p className="text-sm text-zinc-400 truncate">
+                  {currentAudio.category || "Otros"}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={toggleShuffle}
+                    className={`p-2 rounded-full transition ${
+                      shuffleMode
+                        ? "text-green-400 bg-zinc-800"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                    title="Shuffle"
+                  >
+                    <Shuffle className="w-5 h-5" />
                   </button>
 
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`font-semibold truncate ${
-                        isPlaying ? "text-cyan-400" : "text-white"
-                      }`}
-                    >
-                      {audio.title}
-                    </p>
+                  <button
+                    onClick={playPrev}
+                    className="p-2 rounded-full text-zinc-200 hover:bg-zinc-800"
+                    title="Anterior"
+                  >
+                    <SkipBack className="w-5 h-5" />
+                  </button>
 
-                    {audio.description && (
-                      <p className="text-gray-500 text-sm truncate">
-                        {audio.description}
-                      </p>
+                  <button
+                    onClick={togglePlayPause}
+                    className="h-12 w-12 rounded-full bg-green-500 text-black flex items-center justify-center hover:scale-105 transition"
+                    title={isPlaying ? "Pausar" : "Reproducir"}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-6 h-6" />
+                    ) : (
+                      <Play className="w-6 h-6 ml-0.5" />
                     )}
+                  </button>
 
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-gray-600 text-xs">
-                        {audio.created_at
-                          ? new Date(audio.created_at).toLocaleDateString()
-                          : ""}
-                      </span>
+                  <button
+                    onClick={playNext}
+                    className="p-2 rounded-full text-zinc-200 hover:bg-zinc-800"
+                    title="Siguiente"
+                  >
+                    <SkipForward className="w-5 h-5" />
+                  </button>
 
-                      {audio.created_by && (
-                        <span className="text-gray-600 text-xs">
-                          • {audio.created_by.split("@")[0]}
-                        </span>
-                      )}
-
-                      {audio.file_size_mb ? (
-                        <span className="text-gray-600 text-xs">
-                          • {Number(audio.file_size_mb).toFixed(1)} MB
-                        </span>
-                      ) : null}
-
-                      {audio.category && (
-                        <span className="text-gray-600 text-xs">
-                          • {categoryLabels[audio.category] || audio.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge
-                      className={`text-xs ${
-                        audio.is_active
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-gray-500/20 text-gray-300"
-                      }`}
-                    >
-                      {audio.is_active ? "Activo" : "Inactivo"}
-                    </Badge>
-
-                    <button
-                      onClick={() => handleToggleActive(audio)}
-                      disabled={isWorking}
-                      className="w-9 h-9 rounded-full bg-gray-800 text-cyan-400 hover:bg-gray-700 flex items-center justify-center transition-all disabled:opacity-50"
-                      title={audio.is_active ? "Desactivar audio" : "Activar audio"}
-                    >
-                      {audio.is_active ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(audio)}
-                      disabled={isWorking}
-                      className="w-9 h-9 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/40 flex items-center justify-center transition-all disabled:opacity-50"
-                      title="Eliminar audio"
-                    >
-                      {isWorking ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={toggleRepeat}
+                    className={`p-2 rounded-full transition ${
+                      repeatMode
+                        ? "text-green-400 bg-zinc-800"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                    title="Repeat"
+                  >
+                    <Repeat className="w-5 h-5" />
+                  </button>
                 </div>
 
-                {isPlaying && (
-                  <AudioPlayerBar
-                    audio={audio}
-                    isPlaying={true}
-                    onToggle={handleTogglePlay}
+                <div className="w-full flex items-center gap-3">
+                  <span className="text-xs text-zinc-400 w-10 text-right">
+                    {formatTime(currentTime)}
+                  </span>
+
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 0}
+                    step={1}
+                    value={currentTime}
+                    onChange={handleProgressChange}
+                    className="w-full accent-green-500"
                   />
-                )}
+
+                  <span className="text-xs text-zinc-400 w-10">
+                    {formatTime(duration)}
+                  </span>
+                </div>
               </div>
-            );
-          })}
+
+              <div className="flex items-center gap-3 justify-start lg:justify-end">
+                <Volume2 className="w-5 h-5 text-zinc-400" />
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  className="w-full max-w-[140px] accent-green-500"
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
