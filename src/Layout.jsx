@@ -24,7 +24,8 @@ import {
   Trophy,
   ChevronDown,
   Mic,
-  RefreshCw
+  RefreshCw,
+  Disc3
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -101,13 +102,13 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Cumpleaños', icon: Cake, page: 'Birthdays' },
     { name: 'Miembros', icon: Users, page: 'Users' },
     { name: 'Audios', icon: Music, page: 'PublicAudios' },
-    { name: 'Mis Audios', icon: Music, page: 'MyAudios' },
+    { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
     { name: 'Memorama', icon: Sparkles, page: 'Memorama' }
   ];
 
   const authRequiredItems = [
     { name: 'Compartir', icon: Upload, page: 'Upload' },
-    { name: 'Mis Audios', icon: Music, page: 'MyAudios' },
+    { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
     { name: 'Sugerencias', icon: Lightbulb, page: 'Suggestions' },
     { name: 'Perfil', icon: User, page: 'Profile' },
     { name: 'Notificaciones', icon: Bell, page: 'NotificationSettings' }
@@ -127,7 +128,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Trivia Admin', icon: Shield, page: 'AdminTrivia' },
         { name: 'Roles', icon: Users, page: 'RoleManagement' },
         { name: 'Audios', icon: Music, page: 'AudioManager' },
-        { name: 'Mis Audios', icon: Music, page: 'MyAudios' },
+        { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
         { name: 'Videos Admin', icon: Shield, page: 'AdminVideos' },
         { name: 'Programas', icon: Music, page: 'AllPrograms' }
       ]
@@ -283,7 +284,7 @@ export default function Layout({ children, currentPageName }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to={createPageUrl('MyAudios')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      Mis Audios
+                      LLDMPlay
                     </Link>
                   </DropdownMenuItem>
                   {currentUser && (
@@ -304,7 +305,7 @@ export default function Layout({ children, currentPageName }) {
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
               >
-                Mis Audios
+                LLDMPlay
               </Link>
 
               <Link
