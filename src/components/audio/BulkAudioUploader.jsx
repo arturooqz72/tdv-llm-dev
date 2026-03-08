@@ -34,7 +34,7 @@ const ACCEPTED_EXTENSIONS = [
   ".mp4",
 ];
 
-const MAX_FILE_SIZE_MB = 200;
+const MAX_FILE_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const STORAGE_BUCKET = "audios";
 
