@@ -47,6 +47,21 @@ export default function PublicAudios() {
 
   useEffect(() => {
     loadAudios();
+
+    const channel = supabase
+      .channel("audios-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "audios" },
+        () => {
+          loadAudios();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleToggle = (audio) => {
