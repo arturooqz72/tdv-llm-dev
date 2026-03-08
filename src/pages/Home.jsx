@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/AuthContext";
 import VideoCard from "@/components/video/VideoCard";
 import ShareButton from "@/components/ShareButton";
 import FeaturedStreams from "@/components/FeaturedStreams";
-import TuRadioPersonalSection from "@/components/radio/TuRadioPersonalSection";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,10 +18,14 @@ import {
   Users,
   Upload,
   Play,
-  Pause,
   Music,
   Radio,
   Video,
+  Disc3,
+  Headphones,
+  Mic2,
+  ArrowRight,
+  Waves,
 } from "lucide-react";
 
 export default function Home() {
@@ -145,6 +148,16 @@ export default function Home() {
                     Ver Videos
                   </Button>
                 </Link>
+
+                <Link to={createPageUrl("MyAudios")}>
+                  <Button
+                    variant="outline"
+                    className="border-emerald-400 text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
+                  >
+                    <Disc3 className="w-4 h-4 mr-2" />
+                    LLDMPlay
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -164,8 +177,8 @@ export default function Home() {
 
             <CardContent className="space-y-4">
               <p className="text-sm md:text-base text-slate-200 leading-relaxed">
-                Disfruta nuestra radio 24/7, videos, juegos bíblicos, concursos
-                y espacios para convivir con la comunidad.
+                Disfruta nuestra radio 24/7, videos, juegos bíblicos, concursos,
+                LLDMPlay y espacios para convivir con la comunidad.
               </p>
 
               {safeUser ? (
@@ -231,6 +244,13 @@ export default function Home() {
                   Radio 24/7
                 </Button>
               </Link>
+
+              <Link to={createPageUrl("MyAudios")} className="block">
+                <Button className="w-full justify-start bg-emerald-500/15 hover:bg-emerald-500/25 text-white border border-emerald-400/20 rounded-2xl">
+                  <Disc3 className="w-4 h-4 mr-2 text-emerald-300" />
+                  LLDMPlay
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -243,24 +263,117 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TU RADIO PERSONAL */}
+      {/* LLDMPLAY */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
         <div className="w-full max-w-[1600px] mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
             <div className="xl:col-span-8">
-              <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-2xl py-3 px-6 text-center mb-4">
-                <h2 className="text-black font-bold text-lg md:text-xl flex items-center justify-center gap-2">
-                  <Music className="w-5 h-5" />
-                  Tu Radio Personal
-                </h2>
-              </div>
+              <Link to={createPageUrl("MyAudios")} className="block group">
+                <div className="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.25),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.18),transparent_24%),linear-gradient(135deg,rgba(3,7,18,0.96),rgba(17,24,39,0.96),rgba(0,0,0,1))] p-5 md:p-7 shadow-2xl transition duration-300 group-hover:scale-[1.01] group-hover:border-emerald-400/40">
+                  <div className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+                  <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-cyan-500/10 blur-3xl" />
 
-              <div className="rounded-3xl border border-cyan-500/20 bg-[#111827]/90 p-4 md:p-6">
-                <TuRadioPersonalSection
-                  programs={allPrograms}
-                  allPrograms={allPrograms}
-                />
-              </div>
+                  <div className="relative grid grid-cols-1 lg:grid-cols-[1.25fr_320px] gap-6 items-center">
+                    <div>
+                      <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300 mb-4">
+                        <Headphones className="w-4 h-4" />
+                        Audio espiritual para la comunidad
+                      </div>
+
+                      <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">
+                        LLDMPlay
+                      </h2>
+
+                      <p className="text-slate-200 text-sm md:text-lg leading-relaxed max-w-2xl">
+                        Predicaciones, Cantos LLDM, Instrumental, Testimonios,
+                        Podcast, Debates, Temas y más contenido para edificación
+                        espiritual.
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 mt-5">
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs md:text-sm text-white">
+                          Predicaciones
+                        </span>
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs md:text-sm text-white">
+                          Cantos LLDM
+                        </span>
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs md:text-sm text-white">
+                          Testimonios
+                        </span>
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs md:text-sm text-white">
+                          Podcast
+                        </span>
+                      </div>
+
+                      <div className="mt-6 flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center rounded-2xl bg-emerald-500 px-5 py-3 text-black font-bold shadow-lg">
+                          <Disc3 className="w-5 h-5 mr-2" />
+                          Abrir LLDMPlay
+                        </div>
+
+                        <div className="inline-flex items-center text-emerald-300 font-medium">
+                          Entrar ahora
+                          <ArrowRight className="w-4 h-4 ml-2 transition group-hover:translate-x-1" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <div className="rounded-[30px] border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+                        <div className="rounded-[24px] bg-gradient-to-br from-emerald-500/25 via-cyan-500/10 to-blue-500/20 border border-white/10 p-5">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="h-14 w-14 rounded-2xl bg-black/30 border border-white/10 flex items-center justify-center">
+                              <Disc3 className="w-7 h-7 text-emerald-300" />
+                            </div>
+                            <div className="h-12 w-12 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-lg">
+                              <Play className="w-5 h-5 ml-0.5" />
+                            </div>
+                          </div>
+
+                          <h3 className="text-2xl font-bold text-white">
+                            LLDMPlay
+                          </h3>
+                          <p className="text-slate-300 text-sm mt-2">
+                            La biblioteca de audio de la comunidad
+                          </p>
+
+                          <div className="mt-5 space-y-3">
+                            <div className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 border border-white/10">
+                              <div className="flex items-center gap-3">
+                                <Mic2 className="w-4 h-4 text-emerald-300" />
+                                <span className="text-sm text-white">
+                                  Predicaciones
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-300">Audio</span>
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 border border-white/10">
+                              <div className="flex items-center gap-3">
+                                <Music className="w-4 h-4 text-cyan-300" />
+                                <span className="text-sm text-white">
+                                  Cantos LLDM
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-300">Audio</span>
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 border border-white/10">
+                              <div className="flex items-center gap-3">
+                                <Waves className="w-4 h-4 text-blue-300" />
+                                <span className="text-sm text-white">
+                                  Instrumental
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-300">Audio</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </div>
 
             <div className="xl:col-span-4">
@@ -286,10 +399,11 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/10 px-4 py-4">
+                  <div className="rounded-2xl border border-emerald-400/15 bg-emerald-500/10 px-4 py-4">
                     <p className="leading-relaxed">
-                      Explora la comunidad, escucha la radio y comparte contenido
-                      con Team Desvelados LLDM.
+                      Ahora también puedes entrar a <span className="font-bold text-white">LLDMPlay</span> para
+                      escuchar contenido espiritual de la comunidad en un estilo
+                      moderno y fácil de explorar.
                     </p>
                   </div>
                 </CardContent>
