@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import VideoCard from '@/components/video/VideoCard';
 import { Input } from '@/components/ui/input';
 import { Search, ArrowLeft, Video, Loader2 } from 'lucide-react';
