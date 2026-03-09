@@ -44,8 +44,6 @@ const audioCategories = [
 ];
 
 const STORAGE_BUCKETS = {
-  videos: "videos",
-  audios: "audios",
   thumbnails: "thumbnails",
 };
 
@@ -53,6 +51,8 @@ const TABLES = {
   videos: "videos",
   audios: "audios",
 };
+
+const UPLOADCARE_PUBLIC_KEY = import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY;
 
 function slugify(text = "") {
   return text
@@ -96,6 +96,47 @@ async function uploadToSupabaseStorage(bucket, path, file) {
   }
 
   return data.publicUrl;
+}
+
+async function uploadToUploadcare(file) {
+  if (!UPLOADCARE_PUBLIC_KEY) {
+    throw new Error(
+      "Falta la variable VITE_UPLOADCARE_PUBLIC_KEY en tu archivo .env"
+    );
+  }
+
+  const formData = new FormData();
+  formData.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
+  formData.append("UPLOADCARE_STORE", "1");
+  formData.append("file", file);
+  formData.append("filename", file.name || "archivo");
+
+  const response = await fetch("https://upload.uploadcare.com/base/", {
+    method: "POST",
+    body: formData,
+  });
+
+  let result = null;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("Uploadcare devolvió una respuesta inválida.");
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result?.error?.content ||
+        result?.error ||
+        "No se pudo subir el archivo a Uploadcare."
+    );
+  }
+
+  if (!result?.file) {
+    throw new Error("Uploadcare no devolvió el identificador del archivo.");
+  }
+
+  return `https://ucarecdn.com/${result.file}/`;
 }
 
 export default function Upload() {
@@ -223,6 +264,7 @@ export default function Upload() {
     }
 
     setUploading(true);
+    setUploadProgress("");
 
     try {
       const tagsArray = formData.tags
@@ -233,13 +275,8 @@ export default function Upload() {
       const userId = currentUser.id;
 
       if (uploadType === "video") {
-        setUploadProgress("Subiendo video...");
-        const videoPath = buildStoragePath(userId, "videos", videoFile);
-        const publicVideoUrl = await uploadToSupabaseStorage(
-          STORAGE_BUCKETS.videos,
-          videoPath,
-          videoFile
-        );
+        setUploadProgress("Subiendo video a Uploadcare...");
+        const publicVideoUrl = await uploadToUploadcare(videoFile);
 
         let publicThumbnailUrl = null;
 
@@ -274,13 +311,8 @@ export default function Upload() {
 
         if (insertVideoError) throw insertVideoError;
       } else {
-        setUploadProgress("Subiendo audio...");
-        const audioPath = buildStoragePath(userId, "audios", audioFile);
-        const publicAudioUrl = await uploadToSupabaseStorage(
-          STORAGE_BUCKETS.audios,
-          audioPath,
-          audioFile
-        );
+        setUploadProgress("Subiendo audio a Uploadcare...");
+        const publicAudioUrl = await uploadToUploadcare(audioFile);
 
         setUploadProgress("Guardando audio en la base de datos...");
 
