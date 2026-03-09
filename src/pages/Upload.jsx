@@ -23,13 +23,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-const religions = [
-  { value: "lldm", label: "LLDM" },
-  { value: "cristianismo", label: "Cristianismo" },
-  { value: "otros", label: "Otros" },
-];
-
-const audioCategories = [
+const videoCategories = [
   { value: "predicaciones", label: "Predicaciones" },
   { value: "testimonios", label: "Testimonios" },
   { value: "cumpleanos", label: "Cumpleaños" },
@@ -37,6 +31,16 @@ const audioCategories = [
   { value: "podcast", label: "Podcast" },
   { value: "temas", label: "Temas" },
   { value: "otros", label: "Otros" },
+];
+
+const audioCategories = [
+  { value: "sermon", label: "Sermón" },
+  { value: "worship", label: "Adoración" },
+  { value: "prayer", label: "Oración" },
+  { value: "meditation", label: "Meditación" },
+  { value: "podcast", label: "Podcast" },
+  { value: "music", label: "Música" },
+  { value: "other", label: "Otro" },
 ];
 
 /**
@@ -117,9 +121,9 @@ export default function Upload() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    religion: "lldm",
-    topic: "",
     category: "predicaciones",
+    topic: "",
+    audioCategory: "sermon",
     tags: "",
     video_url: "",
     audio_url: "",
@@ -262,7 +266,7 @@ export default function Upload() {
             description: formData.description.trim() || null,
             video_url: publicVideoUrl,
             thumbnail_url: publicThumbnailUrl || null,
-            religion: formData.religion,
+            category: formData.category,
             topic: formData.topic.trim() || null,
             tags: tagsArray,
             status: "pending",
@@ -290,7 +294,7 @@ export default function Upload() {
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             audio_url: publicAudioUrl,
-            category: formData.category,
+            category: formData.audioCategory,
             tags: tagsArray,
             status: "pending",
           });
@@ -539,21 +543,21 @@ export default function Upload() {
               {uploadType === "video" ? (
                 <div>
                   <Label className="text-base font-semibold text-gray-900 mb-3 block">
-                    Categoría Religiosa *
+                    Categoría del Video *
                   </Label>
                   <Select
-                    value={formData.religion}
+                    value={formData.category}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, religion: value })
+                      setFormData({ ...formData, category: value })
                     }
                   >
                     <SelectTrigger className="h-12 text-base">
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {religions.map((religion) => (
-                        <SelectItem key={religion.value} value={religion.value}>
-                          {religion.label}
+                      {videoCategories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -565,9 +569,9 @@ export default function Upload() {
                     Categoría *
                   </Label>
                   <Select
-                    value={formData.category}
+                    value={formData.audioCategory}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, category: value })
+                      setFormData({ ...formData, audioCategory: value })
                     }
                   >
                     <SelectTrigger className="h-12 text-base">
