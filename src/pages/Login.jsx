@@ -61,9 +61,7 @@ export default function Login() {
           },
         });
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         if (!data.session) {
           alert(
@@ -77,6 +75,7 @@ export default function Login() {
         setIsRegisterMode(false);
         setPassword("");
         setConfirmPassword("");
+        setLoading(false);
         return;
       }
 
@@ -85,10 +84,9 @@ export default function Login() {
         password: cleanPassword,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
+      setLoading(false);
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Error de autenticación:", error);
@@ -110,7 +108,7 @@ export default function Login() {
       } else {
         alert("Ocurrió un error al procesar la solicitud.");
       }
-    } finally {
+
       setLoading(false);
     }
   };
@@ -128,9 +126,7 @@ export default function Login() {
         redirectTo: `${window.location.origin}/`,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       alert("Te envié un correo para restablecer tu contraseña.");
     } catch (error) {
