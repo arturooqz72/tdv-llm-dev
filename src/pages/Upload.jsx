@@ -72,12 +72,12 @@ function getFileExtension(file) {
   return "bin";
 }
 
-function buildStoragePath(uid, folder, file) {
+function buildStoragePath(userId, folder, file) {
   const ext = getFileExtension(file);
   const timestamp = Date.now();
   const random = Math.random().toString(36).slice(2, 10);
   const safeName = slugify(file?.name?.replace(/\.[^/.]+$/, "") || "archivo");
-  return `${uid}/${folder}/${timestamp}-${random}-${safeName}.${ext}`;
+  return `${userId}/${folder}/${timestamp}-${random}-${safeName}.${ext}`;
 }
 
 async function uploadToSupabaseStorage(bucket, path, file) {
@@ -202,7 +202,7 @@ export default function Upload() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!currentUser?.uid) {
+    if (!currentUser?.id) {
       alert("Debes iniciar sesión para subir contenido.");
       return;
     }
@@ -230,11 +230,11 @@ export default function Upload() {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      const uid = currentUser.uid;
+      const userId = currentUser.id;
 
       if (uploadType === "video") {
         setUploadProgress("Subiendo video...");
-        const videoPath = buildStoragePath(uid, "videos", videoFile);
+        const videoPath = buildStoragePath(userId, "videos", videoFile);
         const publicVideoUrl = await uploadToSupabaseStorage(
           STORAGE_BUCKETS.videos,
           videoPath,
@@ -245,7 +245,7 @@ export default function Upload() {
 
         if (thumbnailFile) {
           setUploadProgress("Subiendo miniatura...");
-          const thumbPath = buildStoragePath(uid, "thumbnails", thumbnailFile);
+          const thumbPath = buildStoragePath(userId, "thumbnails", thumbnailFile);
           publicThumbnailUrl = await uploadToSupabaseStorage(
             STORAGE_BUCKETS.thumbnails,
             thumbPath,
@@ -258,7 +258,7 @@ export default function Upload() {
         const { error: insertVideoError } = await supabase
           .from(TABLES.videos)
           .insert({
-            user_id: uid,
+            user_id: userId,
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             video_url: publicVideoUrl,
@@ -275,7 +275,7 @@ export default function Upload() {
         if (insertVideoError) throw insertVideoError;
       } else {
         setUploadProgress("Subiendo audio...");
-        const audioPath = buildStoragePath(uid, "audios", audioFile);
+        const audioPath = buildStoragePath(userId, "audios", audioFile);
         const publicAudioUrl = await uploadToSupabaseStorage(
           STORAGE_BUCKETS.audios,
           audioPath,
@@ -287,7 +287,7 @@ export default function Upload() {
         const { error: insertAudioError } = await supabase
           .from(TABLES.audios)
           .insert({
-            user_id: uid,
+            user_id: userId,
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             audio_url: publicAudioUrl,
