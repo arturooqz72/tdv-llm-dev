@@ -56,41 +56,38 @@ function buildAppUser(sessionUser, profile) {
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings] = useState(null);
 
-  const hydrateFromSession = useCallback(async (nextSession) => {
-    try {
-      if (!nextSession?.user) {
-        setSession(null);
-        setUser(null);
-        setIsAuthenticated(false);
-        setAuthError(null);
-        return null;
-      }
+  const loadProfileFromSession = useCallback(async (nextSession) => {
+    if (!nextSession?.user) {
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError(null);
+      return null;
+    }
 
+    try {
       const profile = await getProfileById(nextSession.user.id);
       const appUser = buildAppUser(nextSession.user, profile);
 
-      setSession(nextSession);
       setUser(appUser);
       setIsAuthenticated(true);
       setAuthError(null);
 
       return appUser;
     } catch (error) {
-      console.error("Error hydrating auth session:", error);
-      setSession(null);
+      console.error("Error loading auth profile:", error);
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({
-        type: "auth_hydration_error",
-        message: "No se pudo cargar la sesión actual.",
+        type: "profile_load_error",
+        message: "No se pudo cargar el perfil.",
       });
       return null;
     }
@@ -117,73 +114,52 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
 
-      const appUser = await hydrateFromSession(currentSession);
-      return appUser;
+      setSession(currentSession);
+      return await loadProfileFromSession(currentSession);
     } finally {
       setIsLoadingAuth(false);
     }
-  }, [hydrateFromSession]);
+  }, [loadProfileFromSession]);
 
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
-      try {
-        await checkAppState();
-      } finally {
-        if (mounted) {
-          setIsLoadingAuth(false);
-        }
-      }
+      await checkAppState();
     };
 
     init();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
 
-      setIsLoadingAuth(true);
-      try {
-        await hydrateFromSession(nextSession);
-      } finally {
-        if (mounted) {
-          setIsLoadingAuth(false);
-        }
-      }
+      setSession(nextSession);
+
+      // Evita meter consultas pesadas dentro del callback de auth
+      setTimeout(() => {
+        if (!mounted) return;
+        checkAppState();
+      }, 0);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [checkAppState, hydrateFromSession]);
+  }, [checkAppState]);
 
   const refreshProfile = useCallback(async () => {
     if (!session?.user?.id) return null;
 
     setIsLoadingAuth(true);
     try {
-      const profile = await getProfileById(session.user.id);
-      const appUser = buildAppUser(session.user, profile);
-
-      setUser(appUser);
-      setIsAuthenticated(!!appUser);
-      setAuthError(null);
-
-      return appUser;
-    } catch (error) {
-      console.error("Error refreshing profile:", error);
-      setAuthError({
-        type: "refresh_profile_error",
-        message: "No se pudo actualizar el perfil.",
-      });
-      return null;
+      return await loadProfileFromSession(session);
     } finally {
       setIsLoadingAuth(false);
     }
-  }, [session]);
+  }, [session, loadProfileFromSession]);
 
   const logout = useCallback(
     async (shouldRedirect = true) => {
