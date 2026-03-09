@@ -32,7 +32,7 @@ import {
 
 const RADIO_BASE = "https://radio.team-desveladoslldm.com";
 const STATION = "tdv_lldm-christian_radio";
-const RADIO_PAGE_URL = "https://radio247.team-desveladoslldm.com";
+const RADIO_PAGE_URL = "http://radio24-7.team-desveladoslldm.com/";
 
 const STREAMS = [
   `${RADIO_BASE}/listen/${STATION}/radio.mp3`,
@@ -195,6 +195,10 @@ export default function Home() {
     }
   };
 
+  const openRadioPage = () => {
+    window.open(RADIO_PAGE_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
       <audio
@@ -223,17 +227,10 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <ShareButton />
 
-                <Link to={createPageUrl("Radio")}>
-                  <Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl">
-                    <Radio className="w-4 h-4 mr-2" />
-                    Escuchar Radio
-                  </Button>
-                </Link>
-
                 <Link to={createPageUrl("Videos")}>
                   <Button
                     variant="outline"
-                    className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
+                    className="border-cyan-400 bg-slate-900/70 text-cyan-200 hover:bg-cyan-500/15 hover:text-white rounded-xl font-semibold shadow-sm"
                   >
                     <Video className="w-4 h-4 mr-2" />
                     Ver Videos
@@ -242,8 +239,7 @@ export default function Home() {
 
                 <Link to={createPageUrl("MyAudios")}>
                   <Button
-                    variant="outline"
-                    className="border-emerald-400 text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
+                    className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl font-bold shadow-sm"
                   >
                     <Disc3 className="w-4 h-4 mr-2" />
                     LLDMPlay
@@ -284,8 +280,8 @@ export default function Home() {
 
                 <Button
                   variant="outline"
-                  onClick={() => window.open(RADIO_PAGE_URL, "_blank", "noopener,noreferrer")}
-                  className="shrink-0 border-cyan-400/25 text-cyan-300 hover:bg-cyan-500/10 rounded-2xl"
+                  onClick={openRadioPage}
+                  className="shrink-0 border-cyan-400/25 bg-slate-900/60 text-cyan-200 hover:bg-cyan-500/15 hover:text-white rounded-2xl font-semibold"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Abrir Radio
@@ -334,7 +330,7 @@ export default function Home() {
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => window.open(RADIO_PAGE_URL, "_blank", "noopener,noreferrer")}
+                        onClick={openRadioPage}
                         className="h-14 md:h-16 w-14 md:w-16 p-0 bg-slate-700/70 hover:bg-slate-600 text-white rounded-2xl"
                       >
                         <ExternalLink className="w-7 h-7" />
@@ -577,7 +573,7 @@ export default function Home() {
             <Link to={createPageUrl("Videos")}>
               <Button
                 variant="outline"
-                className="border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 rounded-xl"
+                className="border-cyan-400 bg-slate-900/70 text-cyan-200 hover:bg-cyan-500/15 hover:text-white rounded-xl font-semibold"
               >
                 Ver todos
               </Button>
