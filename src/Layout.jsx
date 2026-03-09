@@ -118,17 +118,13 @@ export default function Layout({ children, currentPageName }) {
   const adminItems = currentUser?.role === 'admin'
     ? [
         { name: 'Estadísticas', icon: TrendingUp, page: 'AppStats' },
-        { name: 'Stats Radio', icon: Sparkles, page: 'RadioStats' },
         { name: 'Conflictos', icon: Shield, page: 'ConflictsManager' },
-        { name: 'Notificaciones', icon: Bell, page: 'AdminNotifications' },
         { name: 'Escucha y Gana Admin', icon: Shield, page: 'AdminEscuchaYGana' },
         { name: 'Trivia Admin', icon: Shield, page: 'AdminTrivia' },
         { name: 'Roles', icon: Users, page: 'RoleManagement' },
         { name: 'Audios', icon: Music, page: 'AudioManager' },
         { name: 'Audios Públicos', icon: Music, page: 'PublicAudios' },
-        { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
-        { name: 'Videos Admin', icon: Shield, page: 'AdminVideos' },
-        { name: 'Programas', icon: Music, page: 'AllPrograms' }
+        { name: 'Videos Admin', icon: Shield, page: 'AdminVideos' }
       ]
     : [];
 
