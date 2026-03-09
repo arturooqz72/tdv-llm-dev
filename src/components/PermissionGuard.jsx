@@ -1,60 +1,49 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Shield } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
-export default function PermissionGuard({ 
-  children, 
-  permission, 
+export default function PermissionGuard({
+  children,
+  permission,
   fallback = null,
-  requireRole = null 
+  requireRole = null
 }) {
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
   const [hasPermission, setHasPermission] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkPermission();
-  }, [permission, requireRole]);
+    if (isLoadingAuth) return;
 
-  const checkPermission = async () => {
-    try {
-      const user = await base44.auth.me();
-      
-      // Admins siempre tienen todos los permisos
-      if (user.role === 'admin') {
-        setHasPermission(true);
-        setLoading(false);
-        return;
-      }
-
-      // Verificar rol específico si se requiere
-      if (requireRole && user.role !== requireRole) {
-        setHasPermission(false);
-        setLoading(false);
-        return;
-      }
-
-      // Verificar permisos granulares
-      if (permission) {
-        const userRoles = await base44.entities.UserRole.filter({ 
-          user_email: user.email 
-        });
-
-        const hasRequiredPermission = userRoles.some(roleRecord => 
-          roleRecord.permissions?.[permission] === true
-        );
-
-        setHasPermission(hasRequiredPermission);
-      } else {
-        setHasPermission(true);
-      }
-    } catch (error) {
+    // Si no hay sesión, negar acceso
+    if (!isAuthenticated || !user) {
       setHasPermission(false);
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
-  if (loading) {
+    // Admin siempre tiene acceso total
+    if (user.role === 'admin') {
+      setHasPermission(true);
+      return;
+    }
+
+    // Si requiere un rol específico y no coincide, negar
+    if (requireRole && user.role !== requireRole) {
+      setHasPermission(false);
+      return;
+    }
+
+    // Si pide permiso granular, revisarlo dentro del usuario actual
+    if (permission) {
+      const allowed = user.permissions?.[permission] === true;
+      setHasPermission(allowed);
+      return;
+    }
+
+    // Si no pide nada extra, permitir
+    setHasPermission(true);
+  }, [user, isAuthenticated, isLoadingAuth, permission, requireRole]);
+
+  if (isLoadingAuth) {
     return null;
   }
 
@@ -75,42 +64,32 @@ export default function PermissionGuard({
 
 // Hook para usar en componentes
 export function usePermission(permission) {
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
   const [hasPermission, setHasPermission] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkPermission();
-  }, [permission]);
+    if (isLoadingAuth) return;
 
-  const checkPermission = async () => {
-    try {
-      const user = await base44.auth.me();
-      
-      if (user.role === 'admin') {
-        setHasPermission(true);
-        setLoading(false);
-        return;
-      }
-
-      if (permission) {
-        const userRoles = await base44.entities.UserRole.filter({ 
-          user_email: user.email 
-        });
-
-        const hasRequiredPermission = userRoles.some(roleRecord => 
-          roleRecord.permissions?.[permission] === true
-        );
-
-        setHasPermission(hasRequiredPermission);
-      } else {
-        setHasPermission(true);
-      }
-    } catch (error) {
+    if (!isAuthenticated || !user) {
       setHasPermission(false);
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
-  return { hasPermission, loading };
+    if (user.role === 'admin') {
+      setHasPermission(true);
+      return;
+    }
+
+    if (permission) {
+      setHasPermission(user.permissions?.[permission] === true);
+      return;
+    }
+
+    setHasPermission(true);
+  }, [user, isAuthenticated, isLoadingAuth, permission]);
+
+  return {
+    hasPermission,
+    loading: isLoadingAuth
+  };
 }
