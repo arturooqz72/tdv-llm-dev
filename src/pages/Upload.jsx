@@ -43,9 +43,6 @@ const audioCategories = [
   { value: "other", label: "Otro" },
 ];
 
-/**
- * AJUSTA ESTOS NOMBRES SOLO SI EN TU PROYECTO SON DIFERENTES
- */
 const STORAGE_BUCKETS = {
   videos: "videos",
   audios: "audios",
@@ -54,7 +51,7 @@ const STORAGE_BUCKETS = {
 
 const TABLES = {
   videos: "videos",
-  audios: "audio_files",
+  audios: "audios",
 };
 
 function slugify(text = "") {
@@ -244,7 +241,7 @@ export default function Upload() {
           videoFile
         );
 
-        let publicThumbnailUrl = "";
+        let publicThumbnailUrl = null;
 
         if (thumbnailFile) {
           setUploadProgress("Subiendo miniatura...");
@@ -265,7 +262,7 @@ export default function Upload() {
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             video_url: publicVideoUrl,
-            thumbnail_url: publicThumbnailUrl || null,
+            thumbnail_url: publicThumbnailUrl,
             category: formData.category,
             topic: formData.topic.trim() || null,
             tags: tagsArray,
