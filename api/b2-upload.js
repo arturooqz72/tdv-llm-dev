@@ -1,16 +1,3 @@
-import crypto from "crypto";
-
-function getPublicBaseUrl(bucketName, endpoint) {
-  if (endpoint) {
-    const match = endpoint.match(/s3\.[^.]+-(\d+)\.backblazeb2\.com$/);
-    if (match?.[1]) {
-      return `https://f${match[1]}.backblazeb2.com/file/${bucketName}`;
-    }
-  }
-
-  return `https://f004.backblazeb2.com/file/${bucketName}`;
-}
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -22,17 +9,17 @@ export default async function handler(req, res) {
     const bucketName = process.env.B2_BUCKET_NAME;
     const endpoint = process.env.B2_ENDPOINT;
 
-    if (!keyId || !applicationKey || !bucketName) {
+    if (!keyId || !applicationKey || !bucketName || !endpoint) {
       return res.status(500).json({
-        error: "Faltan variables de entorno de Backblaze B2 en Vercel.",
+        error: "Faltan variables de entorno de Backblaze en Vercel.",
       });
     }
 
-    const { fileName, contentType, base64, folder } = req.body || {};
+    const { fileName, folder } = req.body || {};
 
-    if (!fileName || !base64) {
+    if (!fileName) {
       return res.status(400).json({
-        error: "Faltan datos del archivo.",
+        error: "Falta fileName.",
       });
     }
 
@@ -111,44 +98,23 @@ export default async function handler(req, res) {
       });
     }
 
-    const fileBuffer = Buffer.from(base64, "base64");
-    const sha1 = crypto.createHash("sha1").update(fileBuffer).digest("hex");
-
     const safeFolder = folder ? `${folder.replace(/^\/+|\/+$/g, "")}/` : "";
     const finalFileName = `${safeFolder}${Date.now()}-${fileName}`;
 
-    const uploadResponse = await fetch(uploadUrlData.uploadUrl, {
-      method: "POST",
-      headers: {
-        Authorization: uploadUrlData.authorizationToken,
-        "X-Bz-File-Name": encodeURIComponent(finalFileName),
-        "Content-Type": contentType || "b2/x-auto",
-        "Content-Length": String(fileBuffer.length),
-        "X-Bz-Content-Sha1": sha1,
-      },
-      body: fileBuffer,
-    });
-
-    const uploadData = await uploadResponse.json();
-
-    if (!uploadResponse.ok) {
-      return res.status(500).json({
-        error: uploadData?.message || "Error al subir archivo a Backblaze.",
-      });
-    }
-
-    const publicBaseUrl = getPublicBaseUrl(bucketName, endpoint);
-    const publicUrl = `${publicBaseUrl}/${finalFileName}`;
+    const regionMatch = endpoint.match(/s3\.([^.]+)\.backblazeb2\.com$/);
+    const region = regionMatch?.[1] || "us-west-004";
+    const publicUrl = `https://f${region.replace("us-west-", "")}.backblazeb2.com/file/${bucketName}/${finalFileName}`;
 
     return res.status(200).json({
-      url: publicUrl,
+      uploadUrl: uploadUrlData.uploadUrl,
+      authorizationToken: uploadUrlData.authorizationToken,
       fileName: finalFileName,
-      fileId: uploadData.fileId,
+      publicUrl,
     });
   } catch (error) {
-    console.error("B2 upload error:", error);
+    console.error("B2 upload init error:", error);
     return res.status(500).json({
-      error: error?.message || "Error interno subiendo a Backblaze.",
+      error: error?.message || "Error interno preparando subida a Backblaze.",
     });
   }
 }
