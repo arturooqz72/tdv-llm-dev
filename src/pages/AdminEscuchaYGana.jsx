@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
 
 function getTodayLocal() {
   const d = new Date();
@@ -16,66 +17,65 @@ function cleanText(s) {
 }
 
 export default function AdminEscuchaYGana() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user, isLoadingAuth } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [recordId, setRecordId] = useState(null);
   const [correctSongName, setCorrectSongName] = useState("");
   const [isActive, setIsActive] = useState(false);
+
   const [status, setStatus] = useState({ type: "", message: "" });
 
   const todayLocal = useMemo(() => getTodayLocal(), []);
-  const isAdmin = currentUser?.role === "admin";
+
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
-    const loadUserAndContest = async () => {
-      setLoading(true);
-      setStatus({ type: "", message: "" });
+    const loadContest = async () => {
+      if (!user || !isAdmin) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
+        const { data, error } = await supabase
+          .from("escucha_y_gana_contests")
+          .select("*")
+          .eq("contest_date", todayLocal)
+          .single();
 
-        if (user?.role !== "admin") {
-          setLoading(false);
-          return;
+        if (error && error.code !== "PGRST116") {
+          console.error(error);
+          setStatus({
+            type: "error",
+            message: "No se pudo cargar la configuración.",
+          });
         }
 
-        const contests = await base44.entities.EscuchaYGanaContest.filter({
-          contest_date: todayLocal,
-        });
-
-        const todayContest = contests?.[0] || null;
-
-        if (todayContest) {
-          setRecordId(todayContest.id);
-          setCorrectSongName(todayContest.correct_song_name || "");
-          setIsActive(!!todayContest.is_active);
-        } else {
-          setRecordId(null);
-          setCorrectSongName("");
-          setIsActive(false);
+        if (data) {
+          setRecordId(data.id);
+          setCorrectSongName(data.correct_song_name || "");
+          setIsActive(data.is_active || false);
         }
       } catch (e) {
         console.error(e);
-        setCurrentUser(null);
-        setStatus({
-          type: "error",
-          message: "No se pudo cargar la configuración. Intenta recargar.",
-        });
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
-    loadUserAndContest();
-  }, [todayLocal]);
+    if (!isLoadingAuth) {
+      loadContest();
+    }
+  }, [user, isAdmin, todayLocal, isLoadingAuth]);
 
-  const save = async (nextIsActive) => {
+  const save = async (nextActive) => {
     setStatus({ type: "", message: "" });
 
     if (!isAdmin) {
-      setStatus({ type: "error", message: "Acceso denegado. Solo admin." });
+      setStatus({ type: "error", message: "Acceso denegado." });
       return;
     }
 
@@ -84,73 +84,75 @@ export default function AdminEscuchaYGana() {
     if (!cleaned) {
       setStatus({
         type: "error",
-        message: "Escribe el nombre correcto del canto (ej: Tiempo de Participar).",
+        message: "Escribe el nombre correcto del canto.",
       });
       return;
     }
 
+    setSaving(true);
+
     try {
-      setSaving(true);
-
       if (recordId) {
-        await base44.entities.EscuchaYGanaContest.update(recordId, {
-          contest_date: todayLocal,
-          correct_song_name: cleaned,
-          is_active: !!nextIsActive,
-        });
-      } else {
-        const created = await base44.entities.EscuchaYGanaContest.create({
-          contest_date: todayLocal,
-          correct_song_name: cleaned,
-          is_active: !!nextIsActive,
-        });
+        const { error } = await supabase
+          .from("escucha_y_gana_contests")
+          .update({
+            correct_song_name: cleaned,
+            is_active: nextActive,
+          })
+          .eq("id", recordId);
 
-        setRecordId(created?.id || null);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("escucha_y_gana_contests")
+          .insert({
+            contest_date: todayLocal,
+            correct_song_name: cleaned,
+            is_active: nextActive,
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setRecordId(data.id);
       }
 
-      setIsActive(!!nextIsActive);
+      setIsActive(nextActive);
 
       setStatus({
         type: "ok",
-        message: nextIsActive
-          ? "✅ Concurso ACTIVADO. Respuesta del día guardada."
-          : "✅ Concurso DESACTIVADO. Respuesta del día guardada.",
+        message: nextActive
+          ? "✅ Concurso ACTIVADO."
+          : "✅ Concurso DESACTIVADO.",
       });
     } catch (e) {
       console.error(e);
       setStatus({
         type: "error",
-        message: "❌ No se pudo guardar. Intenta de nuevo.",
+        message: "❌ Error guardando configuración.",
       });
-    } finally {
-      setSaving(false);
     }
+
+    setSaving(false);
   };
 
-  const activate = () => save(true);
-  const deactivate = () => save(false);
-
-  if (loading) {
+  if (isLoadingAuth || loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <Card className="p-6 bg-gray-800 border-cyan-500">
-          <p className="text-white">Cargando configuración…</p>
+        <Card className="p-6">
+          <p>Cargando configuración...</p>
         </Card>
       </div>
     );
   }
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <Card className="p-6 bg-gray-800 border-cyan-500">
-          <p className="mb-3 text-white">Debes iniciar sesión para acceder.</p>
-          <Button
-            onClick={() => base44.auth.redirectToLogin()}
-            className="bg-cyan-500 hover:bg-cyan-600 text-black"
-          >
-            Iniciar sesión
-          </Button>
+        <Card className="p-6">
+          <p>Debes iniciar sesión.</p>
         </Card>
       </div>
     );
@@ -159,9 +161,8 @@ export default function AdminEscuchaYGana() {
   if (!isAdmin) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <Card className="p-6 bg-gray-800 border-red-500">
-          <p className="text-red-300 font-semibold">Acceso denegado.</p>
-          <p className="text-sm text-gray-300 mt-2">Esta página es solo para administradores.</p>
+        <Card className="p-6">
+          <p>Acceso solo para administradores.</p>
         </Card>
       </div>
     );
@@ -169,68 +170,63 @@ export default function AdminEscuchaYGana() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4 text-center text-white">Admin — Escucha y Gana</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center">
+        Admin — Escucha y Gana
+      </h1>
 
-      <Card className="p-6 mb-4 bg-gray-800 border-cyan-500">
-        <div className="flex flex-col gap-2">
-          <div className="text-sm text-gray-300">
-            Fecha del concurso (local): <b className="text-cyan-400">{todayLocal}</b>
-          </div>
-          <div className="text-sm text-gray-300">
-            Estado actual:{" "}
-            <b className={isActive ? "text-green-400" : "text-yellow-400"}>
-              {isActive ? "ACTIVO" : "INACTIVO"}
-            </b>
-          </div>
-        </div>
+      <Card className="p-6 mb-4">
+        <p>
+          Fecha del concurso: <b>{todayLocal}</b>
+        </p>
+        <p>
+          Estado actual:{" "}
+          <b style={{ color: isActive ? "green" : "orange" }}>
+            {isActive ? "ACTIVO" : "INACTIVO"}
+          </b>
+        </p>
       </Card>
 
-      <Card className="p-6 bg-gray-800 border-cyan-500">
-        <h2 className="text-xl font-semibold mb-3 text-white">Respuesta correcta del día</h2>
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-3">
+          Respuesta correcta del día
+        </h2>
 
         <input
           type="text"
           value={correctSongName}
           onChange={(e) => setCorrectSongName(e.target.value)}
-          placeholder='Ej: "Tiempo de Participar"'
-          className="w-full p-2 border border-gray-600 rounded mb-4 bg-gray-900 text-white"
-          disabled={saving}
+          placeholder="Ej: Tiempo de Participar"
+          className="w-full p-2 border rounded mb-4"
         />
 
         {status.message && (
           <div
-            className={`mb-4 p-3 rounded text-sm ${
-              status.type === "ok"
-                ? "bg-green-900/50 border border-green-500 text-green-200"
-                : "bg-red-900/50 border border-red-500 text-red-200"
-            }`}
+            className="mb-4 p-3 rounded"
+            style={{
+              background: status.type === "ok" ? "#e6ffed" : "#ffecec",
+            }}
           >
             {status.message}
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Button
-            onClick={activate}
+            onClick={() => save(true)}
             disabled={saving}
-            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 text-white"
           >
-            {saving ? "Guardando…" : "Guardar y ACTIVAR"}
+            {saving ? "Guardando..." : "Guardar y ACTIVAR"}
           </Button>
 
           <Button
-            onClick={deactivate}
+            onClick={() => save(false)}
             disabled={saving}
-            className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-black"
+            className="bg-yellow-500 text-black"
           >
-            {saving ? "Guardando…" : "Guardar y DESACTIVAR"}
+            {saving ? "Guardando..." : "Guardar y DESACTIVAR"}
           </Button>
         </div>
-
-        <p className="text-sm text-gray-400 mt-4">
-          Consejo: escribe el nombre exactamente como quieres que lo pongan. (El sistema de
-          resultados puede comparar en minúsculas para evitar errores por mayúsculas.)
-        </p>
       </Card>
     </div>
   );
