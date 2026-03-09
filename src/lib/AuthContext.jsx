@@ -7,163 +7,216 @@ import React, {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { supabase } from "@/lib/supabase";
 
 const AuthContext = createContext();
 
-const USER_STORAGE_KEY = "tdv_current_user";
+async function getProfileById(userId) {
+  if (!userId) return null;
 
-function readStoredUser() {
-  try {
-    if (typeof window === "undefined") return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, full_name, avatar_url, role, can_access_team_desvelados_room, created_at, updated_at")
+    .eq("id", userId)
+    .single();
 
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-
-    return parsed;
-  } catch (error) {
-    console.error("Error reading stored user:", error);
+  if (error) {
+    console.error("Error loading profile:", error);
     return null;
   }
+
+  return data;
 }
 
-function writeStoredUser(userData) {
-  try {
-    if (typeof window === "undefined") return false;
+function buildAppUser(sessionUser, profile) {
+  if (!sessionUser) return null;
 
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    return true;
-  } catch (error) {
-    console.error("Error saving user:", error);
-    return false;
-  }
-}
-
-function clearStoredUser() {
-  try {
-    if (typeof window === "undefined") return false;
-
-    localStorage.removeItem(USER_STORAGE_KEY);
-    return true;
-  } catch (error) {
-    console.error("Error clearing stored user:", error);
-    return false;
-  }
+  return {
+    id: sessionUser.id,
+    email: profile?.email || sessionUser.email || "",
+    name:
+      profile?.full_name ||
+      sessionUser.user_metadata?.full_name ||
+      sessionUser.user_metadata?.name ||
+      (sessionUser.email ? sessionUser.email.split("@")[0] : "Usuario"),
+    photoURL:
+      profile?.avatar_url ||
+      sessionUser.user_metadata?.avatar_url ||
+      sessionUser.user_metadata?.picture ||
+      "",
+    role: profile?.role || "user",
+    canAccessTeamDesveladosRoom: !!profile?.can_access_team_desvelados_room,
+    createdAt: profile?.created_at || null,
+    updatedAt: profile?.updated_at || null,
+    rawAuthUser: sessionUser,
+    rawProfile: profile || null,
+  };
 }
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings] = useState(null);
 
-  const checkAppState = useCallback(() => {
-    setIsLoadingAuth(true);
+  const hydrateFromSession = useCallback(async (nextSession) => {
+    try {
+      if (!nextSession?.user) {
+        setSession(null);
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError(null);
+        return null;
+      }
 
-    const storedUser = readStoredUser();
+      const profile = await getProfileById(nextSession.user.id);
+      const appUser = buildAppUser(nextSession.user, profile);
 
-    if (storedUser) {
-      setUser(storedUser);
+      setSession(nextSession);
+      setUser(appUser);
       setIsAuthenticated(true);
       setAuthError(null);
-      setIsLoadingAuth(false);
-      return storedUser;
-    }
 
-    setUser(null);
-    setIsAuthenticated(false);
-    setAuthError(null);
-    setIsLoadingAuth(false);
-    return null;
+      return appUser;
+    } catch (error) {
+      console.error("Error hydrating auth session:", error);
+      setSession(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError({
+        type: "auth_hydration_error",
+        message: "No se pudo cargar la sesión actual.",
+      });
+      return null;
+    }
   }, []);
 
-  useEffect(() => {
-    checkAppState();
+  const checkAppState = useCallback(async () => {
+    setIsLoadingAuth(true);
 
-    const onStorage = (e) => {
-      if (e.key === USER_STORAGE_KEY) {
-        checkAppState();
+    try {
+      const {
+        data: { session: currentSession },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Error getting session:", error);
+        setSession(null);
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({
+          type: "get_session_error",
+          message: "No se pudo obtener la sesión.",
+        });
+        return null;
+      }
+
+      const appUser = await hydrateFromSession(currentSession);
+      return appUser;
+    } finally {
+      setIsLoadingAuth(false);
+    }
+  }, [hydrateFromSession]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      try {
+        await checkAppState();
+      } finally {
+        if (mounted) {
+          setIsLoadingAuth(false);
+        }
       }
     };
 
-    const onAuthChanged = () => {
-      checkAppState();
-    };
+    init();
 
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("tdv-auth-changed", onAuthChanged);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!mounted) return;
+
+      setIsLoadingAuth(true);
+      try {
+        await hydrateFromSession(nextSession);
+      } finally {
+        if (mounted) {
+          setIsLoadingAuth(false);
+        }
+      }
+    });
 
     return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("tdv-auth-changed", onAuthChanged);
+      mounted = false;
+      subscription.unsubscribe();
     };
-  }, [checkAppState]);
+  }, [checkAppState, hydrateFromSession]);
 
-  const login = useCallback((userData, redirectTo = null) => {
-    if (!userData || typeof userData !== "object") {
-      console.error("login requires a valid user object");
+  const refreshProfile = useCallback(async () => {
+    if (!session?.user?.id) return null;
+
+    setIsLoadingAuth(true);
+    try {
+      const profile = await getProfileById(session.user.id);
+      const appUser = buildAppUser(session.user, profile);
+
+      setUser(appUser);
+      setIsAuthenticated(!!appUser);
+      setAuthError(null);
+
+      return appUser;
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
       setAuthError({
-        type: "invalid_login_data",
-        message: "Invalid login data",
+        type: "refresh_profile_error",
+        message: "No se pudo actualizar el perfil.",
       });
-      return false;
+      return null;
+    } finally {
+      setIsLoadingAuth(false);
     }
+  }, [session]);
 
-    const normalizedUser = {
-      id: userData.id || userData.email || "tdv-user",
-      name: userData.name || userData.displayName || "Usuario",
-      email: userData.email || "",
-      photoURL: userData.photoURL || userData.avatar || "",
-      role: userData.role || "user",
-      ...userData,
-    };
+  const logout = useCallback(
+    async (shouldRedirect = true) => {
+      setIsLoadingAuth(true);
 
-    const saved = writeStoredUser(normalizedUser);
+      try {
+        const { error } = await supabase.auth.signOut();
 
-    if (!saved) {
-      setAuthError({
-        type: "storage_error",
-        message: "Could not save session",
-      });
-      return false;
-    }
+        if (error) {
+          console.error("Error signing out:", error);
+          setAuthError({
+            type: "logout_error",
+            message: "No se pudo cerrar sesión.",
+          });
+          return false;
+        }
 
-    setUser(normalizedUser);
-    setIsAuthenticated(true);
-    setAuthError(null);
+        setSession(null);
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError(null);
 
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("tdv-auth-changed"));
-    }
+        if (shouldRedirect) {
+          navigate(createPageUrl("Login"), { replace: true });
+        }
 
-    if (redirectTo) {
-      navigate(redirectTo, { replace: true });
-    }
-
-    return true;
-  }, [navigate]);
-
-  const logout = useCallback((shouldRedirect = true) => {
-    clearStoredUser();
-
-    setUser(null);
-    setIsAuthenticated(false);
-    setAuthError(null);
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("tdv-auth-changed"));
-    }
-
-    if (shouldRedirect) {
-      navigate(createPageUrl("Login"), { replace: true });
-    }
-  }, [navigate]);
+        return true;
+      } finally {
+        setIsLoadingAuth(false);
+      }
+    },
+    [navigate]
+  );
 
   const navigateToLogin = useCallback(() => {
     navigate(createPageUrl("Login"), { replace: true });
@@ -173,15 +226,16 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        session,
         isAuthenticated,
         isLoadingAuth,
         isLoadingPublicSettings,
         authError,
         appPublicSettings,
-        login,
         logout,
         navigateToLogin,
         checkAppState,
+        refreshProfile,
       }}
     >
       {children}
