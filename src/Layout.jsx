@@ -39,7 +39,7 @@ import GlobalAzuraCastPlayer from '@/components/radio/GlobalAzuraCastPlayer';
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
-  const { user: currentUser, logout } = useAuth();
+  const { user: currentUser, logout } = useAuth();console.log("CURRENT USER EN LAYOUT:", currentUser);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
