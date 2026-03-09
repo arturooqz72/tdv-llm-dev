@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
 
 function maskEmail(email) {
   if (!email || !email.includes("@")) return "usuario";
   const [name, domain] = email.split("@");
-  const safeName = name.length <= 3 ? name[0] + "***" : name.slice(0, 3) + "***";
+  const safeName = name.length <= 3 ? `${name[0]}***` : `${name.slice(0, 3)}***`;
   return `${safeName}@${domain}`;
 }
 
@@ -21,53 +22,53 @@ function getLocalYMD(d) {
 }
 
 export default function EscuchaYGanaResultados() {
+  const { user } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [allRows, setAllRows] = useState([]);
-
-  const [contest, setContest] = useState(null); // {correct_song_name, is_active}
-  const [sourceMode, setSourceMode] = useState("contest_date"); // o "submitted_at_fallback"
+  const [contest, setContest] = useState(null);
+  const [status, setStatus] = useState({ type: "", message: "" });
 
   const todayLocal = useMemo(() => getLocalYMD(new Date()), []);
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setStatus({ type: "", message: "" });
+
       try {
-        // 1) Leer concurso del día (respuesta correcta + activo/inactivo)
-        const contests = await base44.entities.EscuchaYGanaContest.filter({
-          contest_date: todayLocal,
-        });
-        const todayContest = contests?.[0] || null;
-        setContest(todayContest);
+        const { data: contestData, error: contestError } = await supabase
+          .from("escucha_y_gana_contests")
+          .select("*")
+          .eq("contest_date", todayLocal)
+          .maybeSingle();
 
-        // 2) Primero intentar por contest_date (lo correcto)
-        let entries = await base44.entities.EscuchaYGanaEntry.filter({
-          contest_date: todayLocal,
-        });
-
-        // 3) Si no hay, fallback por submitted_at (para registros viejos)
-        if (!entries || entries.length === 0) {
-          const all = await base44.entities.EscuchaYGanaEntry.list();
-          const filtered = (all || []).filter((e) => {
-            if (!e?.submitted_at) return false;
-            return getLocalYMD(new Date(e.submitted_at)) === todayLocal;
-          });
-          entries = filtered;
-          setSourceMode("submitted_at_fallback");
-        } else {
-          setSourceMode("contest_date");
+        if (contestError) {
+          throw contestError;
         }
 
-        const sorted = (entries || [])
-          .filter((e) => e?.submitted_at)
-          .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+        setContest(contestData || null);
 
-        setAllRows(sorted);
+        const { data: entriesData, error: entriesError } = await supabase
+          .from("escucha_y_gana_entries")
+          .select("*")
+          .eq("contest_date", todayLocal)
+          .order("submitted_at", { ascending: true });
+
+        if (entriesError) {
+          throw entriesError;
+        }
+
+        setAllRows(entriesData || []);
       } catch (e) {
         console.error(e);
-        setAllRows([]);
         setContest(null);
-        setSourceMode("contest_date");
+        setAllRows([]);
+        setStatus({
+          type: "error",
+          message: "No se pudieron cargar los resultados.",
+        });
       } finally {
         setLoading(false);
       }
@@ -89,7 +90,9 @@ export default function EscuchaYGanaResultados() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4 text-center">Resultados — Escucha y Gana</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center">
+        Resultados — Escucha y Gana
+      </h1>
 
       <Card className="p-6 mb-4">
         <p className="text-lg">
@@ -100,19 +103,10 @@ export default function EscuchaYGanaResultados() {
           Nota: por privacidad, el correo se muestra parcialmente oculto.
         </p>
 
-        <div className="mt-3 text-sm text-gray-300">
+        <div className="mt-3 text-sm text-gray-700">
           <div>
-            Fuente:{" "}
-            <b>
-              {sourceMode === "contest_date"
-                ? "contest_date (modo normal)"
-                : "submitted_at (fallback para registros viejos)"}
-            </b>
-          </div>
-
-          <div className="mt-1">
             Estado del concurso:{" "}
-            <b className={isActive ? "text-green-300" : "text-yellow-300"}>
+            <b className={isActive ? "text-green-600" : "text-yellow-600"}>
               {isActive ? "ACTIVO" : "INACTIVO"}
             </b>
           </div>
@@ -121,20 +115,31 @@ export default function EscuchaYGanaResultados() {
             Respuesta correcta:{" "}
             <b>
               {correctName
-                ? isActive
+                ? isActive && !isAdmin
                   ? "🔒 Oculta mientras está activo"
                   : correctName
                 : "Aún no configurada"}
             </b>
           </div>
         </div>
+
+        {status.message && (
+          <div
+            className="mt-4 p-3 rounded"
+            style={{
+              background: status.type === "error" ? "#ffecec" : "#e6ffed",
+            }}
+          >
+            {status.message}
+          </div>
+        )}
       </Card>
 
       <Card className="p-6 mb-6">
         <h2 className="text-2xl font-semibold mb-3">Ganadores (primero correcto)</h2>
 
         {loading ? (
-          <p>Cargando…</p>
+          <p>Cargando...</p>
         ) : !correctName ? (
           <p>El admin aún no ha configurado la respuesta correcta del día.</p>
         ) : topWinners.length === 0 ? (
@@ -156,6 +161,7 @@ export default function EscuchaYGanaResultados() {
                     minute: "2-digit",
                     second: "2-digit",
                   });
+
                   return (
                     <tr key={r.id || idx} className="border-b">
                       <td className="py-2 pr-4 font-bold">
@@ -176,7 +182,7 @@ export default function EscuchaYGanaResultados() {
         <h2 className="text-2xl font-semibold mb-3">Todas las participaciones de hoy</h2>
 
         {loading ? (
-          <p>Cargando…</p>
+          <p>Cargando...</p>
         ) : allRows.length === 0 ? (
           <p>No hay participaciones registradas hoy.</p>
         ) : (
@@ -199,10 +205,11 @@ export default function EscuchaYGanaResultados() {
                     second: "2-digit",
                   });
 
-                  const ok =
+                  const isCorrect =
                     correctNormalized &&
-                    normalizeText(r.song_name) === correctNormalized &&
-                    !isActive; // mientras activo, no mostramos si es correcta
+                    normalizeText(r.song_name) === correctNormalized;
+
+                  const showCorrect = !isActive || isAdmin;
 
                   return (
                     <tr key={r.id || idx} className="border-b">
@@ -210,7 +217,9 @@ export default function EscuchaYGanaResultados() {
                       <td className="py-2 pr-4">{maskEmail(r.user_email)}</td>
                       <td className="py-2 pr-4">{time}</td>
                       <td className="py-2 pr-4">{r.song_name}</td>
-                      <td className="py-2 pr-4">{ok ? "✅" : "—"}</td>
+                      <td className="py-2 pr-4">
+                        {showCorrect ? (isCorrect ? "✅" : "—") : "🔒"}
+                      </td>
                     </tr>
                   );
                 })}
