@@ -96,61 +96,66 @@ async function uploadToSupabaseStorage(bucket, path, file) {
   return data.publicUrl;
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      try {
-        const result = reader.result || "";
-        const base64 = String(result).split(",")[1];
-
-        if (!base64) {
-          reject(new Error("No se pudo convertir el archivo a base64."));
-          return;
-        }
-
-        resolve(base64);
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = () => {
-      reject(new Error("No se pudo leer el archivo."));
-    };
-
-    reader.readAsDataURL(file);
-  });
+async function sha1Hex(file) {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function uploadToB2(file, folder = "media") {
-  const base64 = await fileToBase64(file);
-
-  const response = await fetch("/api/b2-upload", {
+  const initResponse = await fetch("/api/b2-upload", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       fileName: file.name,
-      contentType: file.type || "application/octet-stream",
-      base64,
       folder,
     }),
   });
 
-  const data = await response.json();
+  const initData = await initResponse.json();
 
-  if (!response.ok) {
-    throw new Error(data?.error || "No se pudo subir el archivo a Backblaze.");
+  if (!initResponse.ok) {
+    throw new Error(
+      initData?.error || "No se pudo preparar la subida a Backblaze."
+    );
   }
 
-  if (!data?.url) {
-    throw new Error("Backblaze no devolvió una URL pública.");
+  const sha1 = await sha1Hex(file);
+
+  const uploadResponse = await fetch(initData.uploadUrl, {
+    method: "POST",
+    headers: {
+      Authorization: initData.authorizationToken,
+      "X-Bz-File-Name": encodeURIComponent(initData.fileName),
+      "Content-Type": file.type || "b2/x-auto",
+      "X-Bz-Content-Sha1": sha1,
+    },
+    body: file,
+  });
+
+  const rawText = await uploadResponse.text();
+
+  let uploadData = null;
+  try {
+    uploadData = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    throw new Error(rawText || "Backblaze devolvió una respuesta inválida.");
   }
 
-  return data.url;
+  if (!uploadResponse.ok) {
+    throw new Error(
+      uploadData?.message || uploadData?.error || "Error al subir a Backblaze."
+    );
+  }
+
+  if (!initData?.publicUrl) {
+    throw new Error("Backblaze no devolvió URL pública.");
+  }
+
+  return initData.publicUrl;
 }
 
 export default function Upload() {
