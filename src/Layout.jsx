@@ -95,13 +95,10 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Videos', icon: Compass, page: 'Videos' },
     { name: 'Juegos', icon: Compass, page: 'Explore' },
     { name: 'Ranking', icon: Trophy, page: 'RankingJuegos' },
-    { name: 'Radio 24/7', icon: Radio, page: 'Radio' },
-    { name: 'Horarios', icon: Calendar, page: 'RadioSchedule' },
-    { name: 'Eventos', icon: Calendar, page: 'RadioEvents' },
+    { name: 'Radio 24/7 Saludos', icon: Radio, page: 'EnviarSaludos' },
     { name: 'En Vivo', icon: Radio, page: 'LiveStreams' },
     { name: 'Cumpleaños', icon: Cake, page: 'Birthdays' },
     { name: 'Miembros', icon: Users, page: 'Users' },
-    { name: 'Audios', icon: Music, page: 'PublicAudios' },
     { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
     { name: 'Memorama', icon: Sparkles, page: 'Memorama' }
   ];
@@ -128,6 +125,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Trivia Admin', icon: Shield, page: 'AdminTrivia' },
         { name: 'Roles', icon: Users, page: 'RoleManagement' },
         { name: 'Audios', icon: Music, page: 'AudioManager' },
+        { name: 'Audios Públicos', icon: Music, page: 'PublicAudios' },
         { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
         { name: 'Videos Admin', icon: Shield, page: 'AdminVideos' },
         { name: 'Programas', icon: Music, page: 'AllPrograms' }
@@ -177,18 +175,16 @@ export default function Layout({ children, currentPageName }) {
                 Inicio
               </Link>
 
-              {currentUser && (
-                <Link
-                  to={createPageUrl('EnviarSaludos')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    currentPageName === 'EnviarSaludos'
-                      ? 'bg-cyan-500 text-black'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
-                  Enviar Saludos
-                </Link>
-              )}
+              <Link
+                to={createPageUrl('EnviarSaludos')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  currentPageName === 'EnviarSaludos'
+                    ? 'bg-cyan-500 text-black'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                Radio 24/7 Saludos
+              </Link>
 
               <Link
                 to={createPageUrl('Videos')}
@@ -254,46 +250,6 @@ export default function Layout({ children, currentPageName }) {
                       Ganadores
                     </Link>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
-                  Radio <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-gray-900 border-cyan-500/30">
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Radio')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      Radio 24/7
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('RadioSchedule')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      Horarios
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('RadioEvents')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      Eventos
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('PublicAudios')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      Audios
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('MyAudios')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                      LLDMPlay
-                    </Link>
-                  </DropdownMenuItem>
-                  {currentUser && (
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl('RadioDashboard')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                        Dashboard Radio
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -538,45 +494,27 @@ export default function Layout({ children, currentPageName }) {
                 </div>
 
                 {mobileNavItems.map((item) => (
-                  <React.Fragment key={item.page}>
-                    <Link
-                      to={createPageUrl(item.page)}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
-                        currentPageName === item.page
-                          ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                          : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
-                      }`}
-                    >
-                      <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
-                      <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
-                        {item.name}
+                  <Link
+                    key={item.page}
+                    to={createPageUrl(item.page)}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
+                      currentPageName === item.page
+                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
+                        : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                    }`}
+                  >
+                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
+                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
+                      {item.name}
+                    </span>
+
+                    {item.page === 'Chat' && unreadMessagesCount > 0 && (
+                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
                       </span>
-
-                      {item.page === 'Chat' && unreadMessagesCount > 0 && (
-                        <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                          {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                        </span>
-                      )}
-                    </Link>
-
-                    {item.page === 'Home' && currentUser && (
-                      <Link
-                        to={createPageUrl('EnviarSaludos')}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
-                          currentPageName === 'EnviarSaludos'
-                            ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                            : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
-                        }`}
-                      >
-                        <Mic className={`w-6 h-6 ${currentPageName === 'EnviarSaludos' ? 'text-black' : 'text-cyan-400'}`} />
-                        <span className={`font-semibold text-base ${currentPageName === 'EnviarSaludos' ? 'text-black' : 'text-white'}`}>
-                          Enviar Saludos
-                        </span>
-                      </Link>
                     )}
-                  </React.Fragment>
+                  </Link>
                 ))}
 
                 {currentUser && authRequiredItems
