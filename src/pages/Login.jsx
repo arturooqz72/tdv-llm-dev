@@ -1,47 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const ADMIN_EMAILS = ["arturooqz@gmail.com"].map((item) =>
-    item.trim().toLowerCase()
-  );
-
-  const TEAM_DESVELADOS_ROOM_EMAILS = ["arturooqz@gmail.com"].map((item) =>
-    item.trim().toLowerCase()
-  );
-
-  const buildLocalUser = (firebaseUser, cleanEmail) => {
-    const isAdmin = ADMIN_EMAILS.includes(cleanEmail);
-    const canAccessTeamDesveladosRoom =
-      isAdmin || TEAM_DESVELADOS_ROOM_EMAILS.includes(cleanEmail);
-
-    return {
-      id: firebaseUser?.uid || cleanEmail,
-      email: cleanEmail,
-      name: firebaseUser?.displayName || cleanEmail.split("@")[0] || "Usuario",
-      photoURL: firebaseUser?.photoURL || "",
-      role: isAdmin ? "admin" : "user",
-      canAccessTeamDesveladosRoom,
-    };
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,59 +50,65 @@ export default function Login() {
     setLoading(true);
 
     try {
-      let credential;
-
       if (isRegisterMode) {
-        credential = await createUserWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          cleanPassword
-        );
-      } else {
-        credential = await signInWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          cleanPassword
-        );
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: cleanPassword,
+          options: {
+            data: {
+              full_name: cleanEmail.split("@")[0] || "Usuario",
+            },
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data.session) {
+          alert(
+            "Tu cuenta fue creada. Revisa tu correo para confirmar tu cuenta antes de iniciar sesión."
+          );
+        } else {
+          alert("Cuenta creada correctamente.");
+          navigate("/", { replace: true });
+        }
+
+        setIsRegisterMode(false);
+        setPassword("");
+        setConfirmPassword("");
+        return;
       }
 
-      const firebaseUser = credential?.user || null;
-      const localUser = buildLocalUser(firebaseUser, cleanEmail);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: cleanPassword,
+      });
 
-      const ok = login(localUser);
-
-      if (!ok) {
-        alert("No se pudo guardar la sesión local.");
-        return;
+      if (error) {
+        throw error;
       }
 
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Error de autenticación:", error);
 
-      switch (error.code) {
-        case "auth/email-already-in-use":
-          alert("Ese correo ya está registrado. Intenta iniciar sesión.");
-          break;
-        case "auth/invalid-email":
-          alert("El correo no es válido.");
-          break;
-        case "auth/user-not-found":
-          alert("No existe una cuenta con ese correo.");
-          break;
-        case "auth/wrong-password":
-        case "auth/invalid-credential":
-          alert("Correo o contraseña incorrectos.");
-          break;
-        case "auth/weak-password":
-          alert("La contraseña es muy débil. Usa al menos 6 caracteres.");
-          break;
-        case "auth/too-many-requests":
-          alert("Demasiados intentos. Intenta de nuevo en un momento.");
-          break;
-        default:
-          alert("Ocurrió un error al procesar la solicitud.");
-          break;
+      const message = error?.message || "";
+
+      if (message.toLowerCase().includes("user already registered")) {
+        alert("Ese correo ya está registrado. Intenta iniciar sesión.");
+      } else if (message.toLowerCase().includes("invalid login credentials")) {
+        alert("Correo o contraseña incorrectos.");
+      } else if (message.toLowerCase().includes("email not confirmed")) {
+        alert("Debes confirmar tu correo antes de iniciar sesión.");
+      } else if (message.toLowerCase().includes("password should be at least")) {
+        alert("La contraseña debe tener al menos 6 caracteres.");
+      } else if (message.toLowerCase().includes("invalid email")) {
+        alert("El correo no es válido.");
+      } else if (message.toLowerCase().includes("rate limit")) {
+        alert("Demasiados intentos. Intenta de nuevo en un momento.");
+      } else {
+        alert("Ocurrió un error al procesar la solicitud.");
       }
     } finally {
       setLoading(false);
@@ -148,21 +124,24 @@ export default function Login() {
     }
 
     try {
-      await sendPasswordResetEmail(auth, cleanEmail);
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
       alert("Te envié un correo para restablecer tu contraseña.");
     } catch (error) {
       console.error("Error enviando recuperación:", error);
 
-      switch (error.code) {
-        case "auth/user-not-found":
-          alert("No existe una cuenta con ese correo.");
-          break;
-        case "auth/invalid-email":
-          alert("El correo no es válido.");
-          break;
-        default:
-          alert("No se pudo enviar el correo de recuperación.");
-          break;
+      const message = error?.message || "";
+
+      if (message.toLowerCase().includes("invalid email")) {
+        alert("El correo no es válido.");
+      } else {
+        alert("No se pudo enviar el correo de recuperación.");
       }
     }
   };
@@ -243,6 +222,7 @@ export default function Login() {
             type="button"
             onClick={() => {
               setIsRegisterMode((prev) => !prev);
+              setPassword("");
               setConfirmPassword("");
             }}
             className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
