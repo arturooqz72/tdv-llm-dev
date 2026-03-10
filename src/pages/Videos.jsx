@@ -10,7 +10,7 @@ const categories = [
   { value: 'cantos', label: 'Cantos', emoji: '🎵', color: 'from-pink-500 to-pink-600', bg: 'bg-pink-500/10 border-pink-500/30' },
   { value: 'testimonios', label: 'Testimonios', emoji: '✨', color: 'from-blue-500 to-blue-600', bg: 'bg-blue-500/10 border-blue-500/30' },
   { value: 'platicas', label: 'Platicas', emoji: '🗣️', color: 'from-green-500 to-green-600', bg: 'bg-green-500/10 border-green-500/30' },
-  { value: 'debates', label: 'Debates', emoji: '⚖️', color: 'from-red-500 to-red-600', bg: 'bg-red-500/10 border-red-500/30' },
+  { value: 'debates', label: 'Debates', emoji: '⚖️', color: 'from-red-500 to-red-500', bg: 'bg-red-500/10 border-red-500/30' },
   { value: 'temas', label: 'Temas', emoji: '📚', color: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10 border-cyan-500/30' },
   { value: 'podcast', label: 'Podcast', emoji: '🎧', color: 'from-orange-500 to-orange-600', bg: 'bg-orange-500/10 border-orange-500/30' },
   { value: 'otros', label: 'Otros', emoji: '🌟', color: 'from-purple-500 to-purple-600', bg: 'bg-purple-500/10 border-purple-500/30' },
@@ -29,7 +29,7 @@ export default function Videos() {
       const { data, error } = await supabase
         .from('videos')
         .select('*')
-        .eq('religion', selectedCategory)
+        .eq('category', selectedCategory)
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(100);
