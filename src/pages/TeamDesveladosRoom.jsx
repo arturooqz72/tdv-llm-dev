@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   collection,
   addDoc,
@@ -25,11 +25,12 @@ function getShortUserName(user) {
   return safeName.split(" ")[0];
 }
 
-export default function TDVSala() {
+export default function TeamDesveladosRoom() {
   const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const q = query(
@@ -37,16 +38,26 @@ export default function TDVSala() {
       orderBy("createdAt", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMessages(items);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const items = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(items);
+      },
+      (error) => {
+        console.error("Error leyendo mensajes:", error);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = async () => {
     const text = newMessage.trim();
@@ -63,6 +74,9 @@ export default function TDVSala() {
       });
 
       setNewMessage("");
+    } catch (error) {
+      console.error("Error enviando mensaje:", error);
+      alert("No se pudo enviar el mensaje.");
     } finally {
       setSending(false);
     }
@@ -70,77 +84,85 @@ export default function TDVSala() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black px-4 py-6">
-      <div className="max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-2xl border border-white/10 backdrop-blur-xl bg-white/5">
-
-        {/* HEADER */}
-        <div className="px-6 py-4 bg-white/10 border-b border-white/10 backdrop-blur-xl">
-          <h1 className="text-2xl font-bold text-cyan-300 tracking-wide">
-            TDV Sala
+      <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl border border-cyan-500/30 backdrop-blur-xl bg-white/5">
+        <div className="px-6 py-5 bg-white/5 border-b border-cyan-500/20 backdrop-blur-xl">
+          <h1 className="text-3xl font-bold text-cyan-300 tracking-wide">
+            TDV Charla
           </h1>
-          <p className="text-gray-300 text-sm">
+          <p className="text-gray-300 text-sm mt-1">
             Conversación privada entre miembros autorizados.
           </p>
         </div>
 
-        {/* CHAT */}
-        <div className="h-[70vh] overflow-y-auto p-6 space-y-5">
+        <div className="h-[70vh] overflow-y-auto px-4 py-6 md:px-6 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_35%),linear-gradient(to_bottom,rgba(0,0,0,0.28),rgba(0,0,0,0.42))]">
           {messages.length === 0 ? (
-            <div className="text-center text-gray-400 mt-10">
-              Aún no hay mensajes. Sé el primero en escribir.
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center text-gray-400">
+                Aún no hay mensajes. Sé el primero en escribir.
+              </div>
             </div>
           ) : (
-            messages.map((msg) => {
-              const isMine = msg.userEmail === currentUser?.email;
-              const name = msg.userName || msg.userEmail || "Usuario";
-              const initial = String(name).charAt(0).toUpperCase();
+            <div className="max-w-3xl mx-auto space-y-4">
+              {messages.map((msg) => {
+                const isMine = msg.userEmail === currentUser?.email;
+                const name = msg.userName || msg.userEmail || "Usuario";
+                const initial = String(name).charAt(0).toUpperCase();
 
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex items-end gap-3 ${
-                    isMine ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {!isMine && (
-                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 border border-cyan-300/30">
-                      {initial}
-                    </div>
-                  )}
-
+                return (
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md backdrop-blur-xl border ${
-                      isMine
-                        ? "bg-cyan-500/20 border-cyan-400/40 text-white"
-                        : "bg-white/10 border-white/20 text-white"
+                    key={msg.id}
+                    className={`flex w-full ${
+                      isMine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <p
-                      className={`text-xs font-semibold mb-1 ${
-                        isMine ? "text-cyan-300" : "text-cyan-400"
+                    <div
+                      className={`flex items-end gap-3 ${
+                        isMine ? "max-w-[78%] mr-4" : "max-w-[82%] ml-1"
                       }`}
                     >
-                      {isMine ? "Tú" : name}
-                    </p>
+                      {!isMine && (
+                        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-cyan-500/20 border border-cyan-300/30 flex-shrink-0">
+                          {initial}
+                        </div>
+                      )}
 
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                      {msg.text}
-                    </p>
-                  </div>
+                      <div
+                        className={`rounded-2xl px-4 py-3 shadow-md backdrop-blur-xl border ${
+                          isMine
+                            ? "bg-cyan-500/20 border-cyan-400/40 text-white rounded-br-md"
+                            : "bg-white/10 border-white/20 text-white rounded-bl-md"
+                        }`}
+                      >
+                        <p
+                          className={`text-xs font-semibold mb-1 ${
+                            isMine ? "text-cyan-300" : "text-cyan-400"
+                          }`}
+                        >
+                          {isMine ? "Tú" : name}
+                        </p>
 
-                  {isMine && (
-                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 border border-cyan-300/30">
-                      {initial}
+                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                          {msg.text}
+                        </p>
+                      </div>
+
+                      {isMine && (
+                        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-cyan-500/20 border border-cyan-300/30 flex-shrink-0">
+                          {initial}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })
+                  </div>
+                );
+              })}
+
+              <div ref={messagesEndRef} />
+            </div>
           )}
         </div>
 
-        {/* INPUT */}
-        <div className="border-t border-white/10 bg-black/30 p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
+        <div className="border-t border-cyan-500/20 bg-black/30 p-4 backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
             <input
               type="text"
               value={newMessage}
