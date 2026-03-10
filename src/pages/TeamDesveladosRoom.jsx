@@ -83,8 +83,8 @@ export default function TeamDesveladosRoom() {
 
   return (
     <div className="min-h-screen px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-black/70 border border-cyan-500 rounded-2xl p-6 shadow-xl mb-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-black/70 border border-cyan-500 rounded-3xl p-6 shadow-xl mb-4">
           <h1 className="text-3xl font-bold text-cyan-400 mb-2">
             TDV Charla
           </h1>
@@ -94,8 +94,8 @@ export default function TeamDesveladosRoom() {
           </p>
         </div>
 
-        <div className="bg-black/70 border border-cyan-500 rounded-2xl shadow-xl flex flex-col h-[70vh]">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="bg-black/70 border border-cyan-500 rounded-3xl shadow-xl flex flex-col h-[70vh] overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-5">
             {messages.length === 0 ? (
               <div className="text-center text-gray-400 mt-10">
                 Aún no hay mensajes. Sé el primero en escribir.
@@ -109,34 +109,38 @@ export default function TeamDesveladosRoom() {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-3 ${
+                    className={`flex items-end gap-3 ${
                       isMine ? "justify-end" : "justify-start"
                     }`}
                   >
                     {!isMine && (
-                      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold shadow-md flex-shrink-0">
+                      <div className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-cyan-500/20 flex-shrink-0 border border-cyan-300/30">
                         {initial}
                       </div>
                     )}
 
                     <div
-                      className={`max-w-[70%] rounded-xl p-3 border ${
+                      className={`min-w-[120px] max-w-[75%] rounded-2xl px-4 py-3 border shadow-sm ${
                         isMine
-                          ? "bg-cyan-500/20 border-cyan-500"
-                          : "bg-gray-900 border-gray-700"
+                          ? "bg-cyan-500/15 border-cyan-400/70 text-white"
+                          : "bg-gray-900/95 border-gray-700 text-white"
                       }`}
                     >
-                      <p className="text-cyan-400 text-sm font-bold mb-1">
+                      <p
+                        className={`text-xs font-semibold mb-1 ${
+                          isMine ? "text-cyan-300" : "text-cyan-400"
+                        }`}
+                      >
                         {isMine ? "Tú" : name}
                       </p>
 
-                      <p className="text-white whitespace-pre-wrap">
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                         {msg.text}
                       </p>
                     </div>
 
                     {isMine && (
-                      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold shadow-md flex-shrink-0">
+                      <div className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-cyan-500/20 flex-shrink-0 border border-cyan-300/30">
                         {initial}
                       </div>
                     )}
@@ -146,25 +150,27 @@ export default function TeamDesveladosRoom() {
             )}
           </div>
 
-          <div className="border-t border-gray-700 p-4 flex gap-3">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Escribe un mensaje..."
-              className="flex-1 bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSend();
-              }}
-            />
+          <div className="border-t border-cyan-500/20 bg-black/40 p-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                className="flex-1 bg-gray-900/90 text-white border border-gray-700 rounded-2xl px-4 py-3 focus:outline-none focus:border-cyan-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend();
+                }}
+              />
 
-            <button
-              onClick={handleSend}
-              disabled={sending}
-              className="bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 text-black font-bold px-5 py-2 rounded-lg"
-            >
-              {sending ? "Enviando..." : "Enviar"}
-            </button>
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 text-black font-bold px-6 py-3 rounded-2xl shadow-md"
+              >
+                {sending ? "Enviando..." : "Enviar"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
