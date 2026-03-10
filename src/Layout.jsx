@@ -17,7 +17,6 @@ import {
   Shield,
   Music,
   Bell,
-  Calendar,
   TrendingUp,
   Lightbulb,
   Trophy,
@@ -128,9 +127,9 @@ export default function Layout({ children, currentPageName }) {
   const mobileNavItems = navItems;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#f5fcff]">
       <nav
-        className="sticky top-0 z-50 bg-black/90 backdrop-blur-xl border-b border-cyan-500 shadow-sm"
+        className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-cyan-200 shadow-sm"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)'
         }}
@@ -143,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
             }}
           >
             <Link to={createPageUrl('Home')} className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full ring-2 ring-cyan-500 ring-offset-2">
+              <div className="w-10 h-10 rounded-full ring-2 ring-cyan-400 ring-offset-2 ring-offset-white">
                 <img
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/ecac80ce7_teamdesveladosLLDM.png"
                   alt="Team Desvelados LLDM"
@@ -151,7 +150,7 @@ export default function Layout({ children, currentPageName }) {
                 />
               </div>
 
-              <span className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent hidden sm:block">
+              <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-sky-600 bg-clip-text text-transparent hidden sm:block">
                 TEAM DESVELADOS LLDM
               </span>
             </Link>
@@ -161,8 +160,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('Home')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'Home'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 Inicio
@@ -172,8 +171,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('EnviarSaludos')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'EnviarSaludos'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 Radio 24/7 Saludos
@@ -183,30 +182,30 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('Videos')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'Videos'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 Videos
               </Link>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition-all">
                   Juegos <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-gray-900 border-cyan-500/30">
+                <DropdownMenuContent className="bg-white border-cyan-200 shadow-lg">
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Explore')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('Explore')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Todos los Juegos
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('RankingJuegos')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('RankingJuegos')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Ranking
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Memorama')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('Memorama')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Memorama
                     </Link>
                   </DropdownMenuItem>
@@ -214,32 +213,32 @@ export default function Layout({ children, currentPageName }) {
               </DropdownMenu>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition-all">
                   Concursos <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-gray-900 border-cyan-500/30">
+                <DropdownMenuContent className="bg-white border-cyan-200 shadow-lg">
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Concurso')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('Concurso')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Concurso
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('EscuchaYGana')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('EscuchaYGana')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Escucha y Gana
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('EscuchaYGanaResultados')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('EscuchaYGanaResultados')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Resultados
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('JuegaYGana')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('JuegaYGana')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Juega y Gana
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Ganadores')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                    <Link to={createPageUrl('Ganadores')} className="text-slate-700 hover:text-cyan-700 hover:bg-cyan-50 cursor-pointer">
                       Ganadores
                     </Link>
                   </DropdownMenuItem>
@@ -250,8 +249,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('MyAudios')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'MyAudios'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 LLDMPlay
@@ -261,8 +260,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('Birthdays')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'Birthdays'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 Cumpleaños
@@ -273,11 +272,11 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl('TeamDesveladosRoom')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     currentPageName === 'TeamDesveladosRoom'
-                      ? 'bg-cyan-500 text-black'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-cyan-500 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                   }`}
                 >
-                  Sala Team Desvelados
+                  TDV Charla
                 </Link>
               )}
 
@@ -285,8 +284,8 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl('Users')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   currentPageName === 'Users'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-cyan-500 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                 }`}
               >
                 Miembros
@@ -298,8 +297,8 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl('Upload')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPageName === 'Upload'
-                        ? 'bg-cyan-500 text-black'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'bg-cyan-500 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                     }`}
                   >
                     Subir
@@ -309,8 +308,8 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl('Suggestions')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPageName === 'Suggestions'
-                        ? 'bg-cyan-500 text-black'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'bg-cyan-500 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                     }`}
                   >
                     Sugerencias
@@ -320,8 +319,8 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl('Profile')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPageName === 'Profile'
-                        ? 'bg-cyan-500 text-black'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'bg-cyan-500 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                     }`}
                   >
                     Perfil
@@ -331,8 +330,8 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl('NotificationSettings')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPageName === 'NotificationSettings'
-                        ? 'bg-cyan-500 text-black'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'bg-cyan-500 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
                     }`}
                   >
                     Notificaciones
@@ -342,26 +341,26 @@ export default function Layout({ children, currentPageName }) {
 
               {currentUser?.role === 'admin' && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-gray-800 hover:text-red-300 transition-all">
+                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all">
                     Admin <ChevronDown className="w-4 h-4" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-gray-900 border-red-500/30">
+                  <DropdownMenuContent className="bg-white border-red-200 shadow-lg">
                     {adminItems.map((item) => (
                       <DropdownMenuItem asChild key={item.page}>
-                        <Link to={createPageUrl(item.page)} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                        <Link to={createPageUrl(item.page)} className="text-slate-700 hover:text-red-700 hover:bg-red-50 cursor-pointer">
                           {item.name}
                         </Link>
                       </DropdownMenuItem>
                     ))}
 
                     <DropdownMenuItem asChild>
-                      <Link to={createPageUrl('AdminSaludos')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                      <Link to={createPageUrl('AdminSaludos')} className="text-slate-700 hover:text-red-700 hover:bg-red-50 cursor-pointer">
                         Saludos
                       </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
-                      <Link to={createPageUrl('Moderation')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
+                      <Link to={createPageUrl('Moderation')} className="text-slate-700 hover:text-red-700 hover:bg-red-50 cursor-pointer">
                         Moderación
                       </Link>
                     </DropdownMenuItem>
@@ -375,7 +374,7 @@ export default function Layout({ children, currentPageName }) {
                 variant="ghost"
                 size="icon"
                 onClick={() => window.location.reload()}
-                className="rounded-full text-white hover:bg-gray-800"
+                className="rounded-full text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
                 title="Refrescar"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -386,7 +385,7 @@ export default function Layout({ children, currentPageName }) {
                   variant="ghost"
                   size="icon"
                   onClick={handleLogout}
-                  className="rounded-full hidden md:flex text-white hover:bg-gray-800"
+                  className="rounded-full hidden md:flex text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4" />
@@ -394,7 +393,7 @@ export default function Layout({ children, currentPageName }) {
               ) : (
                 <Button
                   onClick={() => navigate(createPageUrl('Login'))}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2 text-base shadow-lg"
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2 text-base shadow-sm"
                 >
                   Iniciar Sesión
                 </Button>
@@ -402,7 +401,7 @@ export default function Layout({ children, currentPageName }) {
 
               <button
                 onClick={() => setMobileMenuOpen((v) => !v)}
-                className="lg:hidden flex flex-col items-center justify-center gap-1 bg-cyan-500 hover:bg-cyan-600 px-3 py-2 rounded-lg"
+                className="lg:hidden flex flex-col items-center justify-center gap-1 bg-cyan-500 hover:bg-cyan-600 px-3 py-2 rounded-lg shadow-sm"
                 aria-label="Abrir menú"
               >
                 {mobileMenuOpen ? (
@@ -423,37 +422,37 @@ export default function Layout({ children, currentPageName }) {
 
           {mobileMenuOpen && (
             <div
-              className="lg:hidden py-4 border-t border-cyan-500 bg-gray-900 overflow-y-auto"
+              className="lg:hidden py-4 border-t border-cyan-200 bg-white/95 overflow-y-auto"
               style={{
                 maxHeight: 'calc(100vh - 80px - env(safe-area-inset-top, 0px))'
               }}
             >
               <div className="space-y-2">
-                <div className="bg-gray-800 rounded-xl px-4 py-3 border border-cyan-500/30">
-                  <span className="text-sm text-cyan-400 font-bold mb-2 block">🏆 CONCURSOS:</span>
+                <div className="bg-cyan-50 rounded-xl px-4 py-3 border border-cyan-200">
+                  <span className="text-sm text-cyan-700 font-bold mb-2 block">🏆 CONCURSOS:</span>
 
-                  <Link to={createPageUrl('Concurso')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-cyan-500/20 border border-transparent hover:border-cyan-500">
-                    <Sparkles className="w-6 h-6 text-cyan-400" />
+                  <Link to={createPageUrl('Concurso')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-700 hover:bg-white border border-transparent hover:border-cyan-200">
+                    <Sparkles className="w-6 h-6 text-cyan-500" />
                     <span className="font-semibold text-base">Concurso</span>
                   </Link>
 
-                  <Link to={createPageUrl('EscuchaYGana')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-cyan-500/20 border border-transparent hover:border-cyan-500">
-                    <Music className="w-6 h-6 text-cyan-400" />
+                  <Link to={createPageUrl('EscuchaYGana')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-700 hover:bg-white border border-transparent hover:border-cyan-200">
+                    <Music className="w-6 h-6 text-cyan-500" />
                     <span className="font-semibold text-base">Escucha y Gana</span>
                   </Link>
 
-                  <Link to={createPageUrl('EscuchaYGanaResultados')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-cyan-500/20 border border-transparent hover:border-cyan-500">
-                    <TrendingUp className="w-6 h-6 text-cyan-400" />
+                  <Link to={createPageUrl('EscuchaYGanaResultados')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-700 hover:bg-white border border-transparent hover:border-cyan-200">
+                    <TrendingUp className="w-6 h-6 text-cyan-500" />
                     <span className="font-semibold text-base">Resultados</span>
                   </Link>
 
-                  <Link to={createPageUrl('JuegaYGana')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-cyan-500/20 border border-transparent hover:border-cyan-500">
-                    <Compass className="w-6 h-6 text-cyan-400" />
+                  <Link to={createPageUrl('JuegaYGana')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-700 hover:bg-white border border-transparent hover:border-cyan-200">
+                    <Compass className="w-6 h-6 text-cyan-500" />
                     <span className="font-semibold text-base">Juega y Gana</span>
                   </Link>
 
-                  <Link to={createPageUrl('Ganadores')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-cyan-500/20 border border-transparent hover:border-cyan-500">
-                    <TrendingUp className="w-6 h-6 text-cyan-400" />
+                  <Link to={createPageUrl('Ganadores')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-700 hover:bg-white border border-transparent hover:border-cyan-200">
+                    <TrendingUp className="w-6 h-6 text-cyan-500" />
                     <span className="font-semibold text-base">Ganadores</span>
                   </Link>
                 </div>
@@ -465,12 +464,12 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
                       currentPageName === item.page
-                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                        : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                        ? 'bg-cyan-500 text-white border-cyan-500 shadow-sm'
+                        : 'text-slate-700 bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-300'
                     }`}
                   >
-                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
-                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
+                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-white' : 'text-cyan-500'}`} />
+                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-white' : 'text-slate-700'}`}>
                       {item.name}
                     </span>
 
@@ -491,12 +490,12 @@ export default function Layout({ children, currentPageName }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
                         currentPageName === item.page
-                          ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                          : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                          ? 'bg-cyan-500 text-white border-cyan-500 shadow-sm'
+                          : 'text-slate-700 bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-300'
                       }`}
                     >
-                      <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
-                      <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
+                      <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-white' : 'text-cyan-500'}`} />
+                      <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-white' : 'text-slate-700'}`}>
                         {item.name}
                       </span>
                     </Link>
@@ -508,13 +507,13 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
                       currentPageName === 'TeamDesveladosRoom'
-                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                        : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                        ? 'bg-cyan-500 text-white border-cyan-500 shadow-sm'
+                        : 'text-slate-700 bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-300'
                     }`}
                   >
-                    <Users className={`w-6 h-6 ${currentPageName === 'TeamDesveladosRoom' ? 'text-black' : 'text-cyan-400'}`} />
-                    <span className={`font-semibold text-base ${currentPageName === 'TeamDesveladosRoom' ? 'text-black' : 'text-white'}`}>
-                      Sala Team Desvelados
+                    <Users className={`w-6 h-6 ${currentPageName === 'TeamDesveladosRoom' ? 'text-white' : 'text-cyan-500'}`} />
+                    <span className={`font-semibold text-base ${currentPageName === 'TeamDesveladosRoom' ? 'text-white' : 'text-slate-700'}`}>
+                      TDV Charla
                     </span>
                   </Link>
                 )}
@@ -526,20 +525,20 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
                       currentPageName === item.page
-                        ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                        : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
+                        ? 'bg-cyan-500 text-white border-cyan-500 shadow-sm'
+                        : 'text-slate-700 bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-300'
                     }`}
                   >
-                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-black' : 'text-cyan-400'}`} />
-                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-black' : 'text-white'}`}>
+                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-white' : 'text-cyan-500'}`} />
+                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-white' : 'text-slate-700'}`}>
                       {item.name}
                     </span>
                   </Link>
                 ))}
 
                 {currentUser?.role === 'admin' && adminItems.length > 0 && (
-                  <div className="mt-4 bg-gray-800 rounded-xl px-4 py-3 border border-red-500/30">
-                    <span className="text-sm text-red-400 font-bold mb-2 block">🔐 ADMIN:</span>
+                  <div className="mt-4 bg-red-50 rounded-xl px-4 py-3 border border-red-200">
+                    <span className="text-sm text-red-600 font-bold mb-2 block">🔐 ADMIN:</span>
 
                     <div className="mt-2 space-y-2">
                       {adminItems.map((item) => (
@@ -549,8 +548,8 @@ export default function Layout({ children, currentPageName }) {
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all border ${
                             currentPageName === item.page
-                              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500'
-                              : 'text-white bg-gray-900 hover:bg-gray-800 border-gray-700 hover:border-red-500'
+                              ? 'bg-red-500 text-white border-red-500'
+                              : 'text-slate-700 bg-white hover:bg-red-50 border-red-100 hover:border-red-300'
                           }`}
                         >
                           <item.icon className="w-6 h-6" />
@@ -563,8 +562,8 @@ export default function Layout({ children, currentPageName }) {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all border ${
                           currentPageName === 'AdminSaludos'
-                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500'
-                            : 'text-white bg-gray-900 hover:bg-gray-800 border-gray-700 hover:border-red-500'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'text-slate-700 bg-white hover:bg-red-50 border-red-100 hover:border-red-300'
                         }`}
                       >
                         <Mic className="w-6 h-6" />
@@ -576,8 +575,8 @@ export default function Layout({ children, currentPageName }) {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all border ${
                           currentPageName === 'Moderation'
-                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500'
-                            : 'text-white bg-gray-900 hover:bg-gray-800 border-gray-700 hover:border-red-500'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'text-slate-700 bg-white hover:bg-red-50 border-red-100 hover:border-red-300'
                         }`}
                       >
                         <Shield className="w-6 h-6" />
@@ -592,8 +591,8 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </nav>
 
-      <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0B3A4A] via-[#061F2B] to-[#030B10]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.22),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(56,189,248,0.14),transparent_60%)]" />
+      <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#e9f9ff] via-[#f5fcff] to-[#ffffff]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(125,211,252,0.20),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(103,232,249,0.14),transparent_60%)]" />
         <div className="relative z-10">
           {children}
         </div>
@@ -602,13 +601,13 @@ export default function Layout({ children, currentPageName }) {
       <GlobalAzuraCastPlayer />
       <GlobalMiniPlayer />
 
-      <footer className="bg-black border-t border-cyan-500 mt-20">
+      <footer className="bg-white border-t border-cyan-200 mt-20">
         <div className="container mx-auto px-6 py-8">
           <div className="text-center">
-            <p className="text-cyan-400 font-semibold">
+            <p className="text-cyan-700 font-semibold">
               TEAM DESVELADOS LLDM - Comunidad de LLDM donde todos son bienvenidos
             </p>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-sm text-slate-500 mt-2">
               © 2026 Todos los derechos reservados
             </p>
           </div>
