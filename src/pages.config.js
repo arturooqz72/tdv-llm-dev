@@ -6,7 +6,6 @@ import AdivinaLaPalabra from './pages/AdivinaLaPalabra';
 import AdivinaVersiculo from './pages/AdivinaVersiculo';
 import AdivinaVersiculoDificil from './pages/AdivinaVersiculoDificil';
 import AdivinaVersiculoPlay from './pages/AdivinaVersiculoPlay';
-import AdminChatRooms from './pages/AdminChatRooms';
 import AdminEscuchaYGana from './pages/AdminEscuchaYGana';
 import AdminNotifications from './pages/AdminNotifications';
 import AdminSaludos from './pages/AdminSaludos';
@@ -26,7 +25,6 @@ import EscuchaYGanaResultados from './pages/EscuchaYGanaResultados';
 import Explore from './pages/Explore';
 import Ganadores from './pages/Ganadores';
 import GoLive from './pages/GoLive';
-import GroupChat from './pages/GroupChat';
 import Home from './pages/Home';
 import Index from './pages/Index';
 import JuegaYGana from './pages/JuegaYGana';
@@ -56,7 +54,6 @@ export const PAGES = {
     "AdivinaVersiculo": AdivinaVersiculo,
     "AdivinaVersiculoDificil": AdivinaVersiculoDificil,
     "AdivinaVersiculoPlay": AdivinaVersiculoPlay,
-    "AdminChatRooms": AdminChatRooms,
     "AdminEscuchaYGana": AdminEscuchaYGana,
     "AdminNotifications": AdminNotifications,
     "AdminSaludos": AdminSaludos,
@@ -77,7 +74,6 @@ export const PAGES = {
     "Explore": Explore,
     "Ganadores": Ganadores,
     "GoLive": GoLive,
-    "GroupChat": GroupChat,
     "Home": Home,
     "Index": Index,
     "JuegaYGana": JuegaYGana,
