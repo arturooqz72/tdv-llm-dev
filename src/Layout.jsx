@@ -10,7 +10,6 @@ import {
   User,
   LogOut,
   X,
-  MessageCircle,
   Users,
   Radio,
   Cake,
@@ -269,17 +268,6 @@ export default function Layout({ children, currentPageName }) {
                 Cumpleaños
               </Link>
 
-              <Link
-                to={createPageUrl('GroupChat')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  currentPageName === 'GroupChat'
-                    ? 'bg-cyan-500 text-black'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                Salas de Chat
-              </Link>
-
               {canAccessTeamDesveladosRoom && (
                 <Link
                   to={createPageUrl('TeamDesveladosRoom')}
@@ -369,12 +357,6 @@ export default function Layout({ children, currentPageName }) {
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl('AdminSaludos')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
                         Saludos
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem asChild>
-                      <Link to={createPageUrl('AdminChatRooms')} className="text-gray-300 hover:text-white hover:bg-gray-800 cursor-pointer">
-                        Salas de Chats
                       </Link>
                     </DropdownMenuItem>
 
@@ -520,21 +502,6 @@ export default function Layout({ children, currentPageName }) {
                     </Link>
                   ))}
 
-                <Link
-                  to={createPageUrl('GroupChat')}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
-                    currentPageName === 'GroupChat'
-                      ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black border-cyan-400'
-                      : 'text-white bg-gray-800 hover:bg-gray-700 border-gray-700 hover:border-cyan-500'
-                  }`}
-                >
-                  <Users className={`w-6 h-6 ${currentPageName === 'GroupChat' ? 'text-black' : 'text-cyan-400'}`} />
-                  <span className={`font-semibold text-base ${currentPageName === 'GroupChat' ? 'text-black' : 'text-white'}`}>
-                    Salas de Chat
-                  </span>
-                </Link>
-
                 {canAccessTeamDesveladosRoom && (
                   <Link
                     to={createPageUrl('TeamDesveladosRoom')}
@@ -602,19 +569,6 @@ export default function Layout({ children, currentPageName }) {
                       >
                         <Mic className="w-6 h-6" />
                         <span className="font-semibold text-base">Saludos</span>
-                      </Link>
-
-                      <Link
-                        to={createPageUrl('AdminChatRooms')}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all border ${
-                          currentPageName === 'AdminChatRooms'
-                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500'
-                            : 'text-white bg-gray-900 hover:bg-gray-800 border-gray-700 hover:border-red-500'
-                        }`}
-                      >
-                        <MessageCircle className="w-6 h-6" />
-                        <span className="font-semibold text-base">Salas de Chats</span>
                       </Link>
 
                       <Link
