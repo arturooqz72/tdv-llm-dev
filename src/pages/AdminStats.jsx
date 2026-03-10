@@ -1,4 +1,4 @@
- import React from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
@@ -14,6 +14,8 @@ import {
   Loader2,
   Shield,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 async function getTableCountSafe(tableName, filter = null) {
@@ -55,7 +57,7 @@ export default function AdminStats() {
   const { user: currentUser, isLoadingAuth } = useAuth();
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-stats-v3"],
+    queryKey: ["admin-stats-v4"],
     queryFn: async () => {
       const results = await Promise.all([
         getTableCountSafe("profiles"),
@@ -64,6 +66,8 @@ export default function AdminStats() {
         getTableCountSafe("videos", { column: "status", value: "pending" }),
         getTableCountSafe("videos", { column: "status", value: "rejected" }),
         getTableCountSafe("audios"),
+        getTableCountSafe("audios", { column: "is_active", value: true }),
+        getTableCountSafe("audios", { column: "is_active", value: false }),
       ]);
 
       const [
@@ -73,6 +77,8 @@ export default function AdminStats() {
         pendingVideos,
         rejectedVideos,
         totalAudios,
+        activeAudios,
+        inactiveAudios,
       ] = results;
 
       return {
@@ -83,6 +89,8 @@ export default function AdminStats() {
           pendingVideos: pendingVideos.count,
           rejectedVideos: rejectedVideos.count,
           totalAudios: totalAudios.count,
+          activeAudios: activeAudios.count,
+          inactiveAudios: inactiveAudios.count,
           updatedAt: new Date().toISOString(),
         },
         tableResults: {
@@ -92,6 +100,8 @@ export default function AdminStats() {
           videosPending: pendingVideos,
           videosRejected: rejectedVideos,
           audios: totalAudios,
+          audiosActive: activeAudios,
+          audiosInactive: inactiveAudios,
         },
       };
     },
@@ -215,27 +225,24 @@ export default function AdminStats() {
                   <CardContent>
                     <div className="space-y-4">
                       <MiniStatRow
-                        label="Aprobados"
-                        value="—"
-                        icon={CheckCircle}
-                        valueClassName="text-gray-400"
+                        label="Activos"
+                        value={data?.stats?.activeAudios ?? 0}
+                        icon={Eye}
+                        valueClassName="text-green-400"
                       />
                       <MiniStatRow
-                        label="Pendientes"
-                        value="—"
-                        icon={Clock3}
-                        valueClassName="text-gray-400"
+                        label="Inactivos"
+                        value={data?.stats?.inactiveAudios ?? 0}
+                        icon={EyeOff}
+                        valueClassName="text-gray-300"
                       />
                       <MiniStatRow
-                        label="Rechazados"
-                        value="—"
-                        icon={Shield}
-                        valueClassName="text-gray-400"
+                        label="Total"
+                        value={data?.stats?.totalAudios ?? 0}
+                        icon={Music}
+                        valueClassName="text-cyan-400"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-4">
-                      El resumen por estado de audios se activará cuando confirmemos el nombre real de la columna correspondiente.
-                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -249,9 +256,9 @@ export default function AdminStats() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {Object.values(data?.tableResults || {}).map((item) => (
+                    {Object.values(data?.tableResults || {}).map((item, index) => (
                       <div
-                        key={`${item.table}-${item.error || "ok"}`}
+                        key={`${item.table}-${index}-${item.error || "ok"}`}
                         className="flex items-start justify-between gap-4 rounded-xl border border-gray-800 bg-gray-950/60 px-4 py-3"
                       >
                         <div>
