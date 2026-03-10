@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,52 +12,21 @@ import {
   Eye,
   Trash2,
   Ban,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import PermissionGuard from '@/components/PermissionGuard';
-
-const USER_STORAGE_KEY = 'tdv_current_user';
-
-function readStoredUser() {
-  try {
-    if (typeof window === 'undefined') return null;
-
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+import { useAuth } from '@/lib/AuthContext';
 
 export default function ModerationPage() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user: currentUser, isLoadingAuth } = useAuth();
 
   const [reports, setReports] = useState([]);
   const [pendingVideos, setPendingVideos] = useState([]);
   const [pendingAudios, setPendingAudios] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
-  const [allUsers] = useState([]);
-
-  useEffect(() => {
-    const user = readStoredUser();
-
-    if (!user || user.role !== 'admin') {
-      alert('No tienes permisos para acceder a esta página');
-      window.location.href = '/';
-      return;
-    }
-
-    setCurrentUser(user);
-    setIsLoading(false);
-  }, []);
 
   const handleResolve = async (report, action) => {
     const actionText =
@@ -151,10 +120,16 @@ export default function ModerationPage() {
     [reports]
   );
 
-  if (!currentUser) return null;
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+      </div>
+    );
+  }
 
   return (
-    <PermissionGuard permission="can_moderate_content">
+    <PermissionGuard requireRole="admin">
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
@@ -251,7 +226,7 @@ export default function ModerationPage() {
                                   <Badge className="bg-yellow-100 text-yellow-800">
                                     Pendiente de Aprobación
                                   </Badge>
-                                  {video.religion && <Badge variant="outline">{video.religion}</Badge>}
+                                  {video.category && <Badge variant="outline">{video.category}</Badge>}
                                   {video.tags && video.tags.length > 0 &&
                                     video.tags.map((tag) => (
                                       <Badge key={tag} variant="secondary">{tag}</Badge>
@@ -387,11 +362,7 @@ export default function ModerationPage() {
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">
-              {isLoading ? (
-                Array(3).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="h-48 w-full rounded-2xl" />
-                ))
-              ) : pendingReports.length === 0 ? (
+              {pendingReports.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center">
                     <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
