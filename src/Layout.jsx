@@ -39,8 +39,7 @@ import GlobalAzuraCastPlayer from '@/components/radio/GlobalAzuraCastPlayer';
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
-  const { user: currentUser, logout } = useAuth();
-  console.log("CURRENT USER EN LAYOUT:", currentUser);
+  const { user: currentUser, logout } = useAuth();console.log("CURRENT USER EN LAYOUT:", currentUser);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -97,6 +96,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Juegos', icon: Compass, page: 'Explore' },
     { name: 'Ranking', icon: Trophy, page: 'RankingJuegos' },
     { name: 'Radio 24/7 Saludos', icon: Radio, page: 'EnviarSaludos' },
+    { name: 'En Vivo', icon: Radio, page: 'LiveStreams' },
     { name: 'Cumpleaños', icon: Cake, page: 'Birthdays' },
     { name: 'Miembros', icon: Users, page: 'Users' },
     { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
@@ -258,6 +258,17 @@ export default function Layout({ children, currentPageName }) {
                 }`}
               >
                 LLDMPlay
+              </Link>
+
+              <Link
+                to={createPageUrl('LiveStreams')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  currentPageName === 'LiveStreams'
+                    ? 'bg-cyan-500 text-black'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                En Vivo
               </Link>
 
               <Link
