@@ -85,8 +85,8 @@ export default function TeamDesveladosRoom() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black px-3 py-4 sm:px-4 sm:py-6">
       <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl border border-cyan-500/30 backdrop-blur-xl bg-white/5">
-        <div className="px-5 py-5 sm:px-6 bg-white/5 border-b border-cyan-500/20 backdrop-blur-xl">
-          <h1 className="text-3xl font-bold text-cyan-300 tracking-wide">
+        <div className="px-5 py-4 sm:px-6 sm:py-5 bg-white/5 border-b border-cyan-500/20 backdrop-blur-xl">
+          <h1 className="text-2xl sm:text-3xl font-bold text-cyan-300 tracking-wide">
             TDV Charla
           </h1>
           <p className="text-gray-300 text-sm mt-1">
@@ -94,7 +94,7 @@ export default function TeamDesveladosRoom() {
           </p>
         </div>
 
-        <div className="h-[70vh] overflow-y-auto px-3 py-5 sm:px-6 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_35%),linear-gradient(to_bottom,rgba(0,0,0,0.28),rgba(0,0,0,0.42))]">
+        <div className="h-[68vh] sm:h-[70vh] overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:px-6 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_35%),linear-gradient(to_bottom,rgba(0,0,0,0.28),rgba(0,0,0,0.42))]">
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
@@ -115,25 +115,25 @@ export default function TeamDesveladosRoom() {
                       isMine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {!isMine ? (
-                      <div className="flex items-end gap-2 sm:gap-3 max-w-[92%] sm:max-w-[82%]">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-cyan-500/20 border border-cyan-300/30 flex-shrink-0">
-                          {initial}
-                        </div>
-
-                        <div className="rounded-2xl rounded-bl-md px-4 py-3 shadow-md backdrop-blur-xl border bg-white/10 border-white/20 text-white w-fit max-w-full">
-                          <p className="text-xs font-semibold mb-1 text-cyan-400">
-                            {name}
-                          </p>
-
+                    {isMine ? (
+                      <div className="max-w-[86%] sm:max-w-[80%] md:max-w-[72%]">
+                        <div className="rounded-2xl rounded-br-md px-4 py-3 shadow-md backdrop-blur-xl border bg-cyan-500/20 border-cyan-400/40 text-white">
                           <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                             {msg.text}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="max-w-[88%] sm:max-w-[78%]">
-                        <div className="rounded-2xl rounded-br-md px-4 py-3 shadow-md backdrop-blur-xl border bg-cyan-500/20 border-cyan-400/40 text-white w-fit max-w-full ml-auto">
+                      <div className="flex items-end gap-2 sm:gap-3 max-w-[90%] sm:max-w-[82%]">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-cyan-500/20 border border-cyan-300/30 flex-shrink-0">
+                          {initial}
+                        </div>
+
+                        <div className="rounded-2xl rounded-bl-md px-4 py-3 shadow-md backdrop-blur-xl border bg-white/10 border-white/20 text-white">
+                          <p className="text-xs font-semibold mb-1 text-cyan-400">
+                            {name}
+                          </p>
+
                           <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                             {msg.text}
                           </p>
@@ -156,7 +156,7 @@ export default function TeamDesveladosRoom() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Escribe un mensaje..."
-              className="flex-1 bg-white/10 text-white border border-white/20 rounded-2xl px-4 py-3 focus:outline-none focus:border-cyan-400 shadow-inner min-w-0"
+              className="flex-1 bg-white/10 text-white border border-white/20 rounded-2xl px-4 py-3 focus:outline-none focus:border-cyan-400 shadow-inner"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSend();
               }}
@@ -165,9 +165,9 @@ export default function TeamDesveladosRoom() {
             <button
               onClick={handleSend}
               disabled={sending}
-              className="bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 text-black font-bold px-5 sm:px-6 py-3 rounded-2xl shadow-md shadow-cyan-500/30 shrink-0"
+              className="bg-cyan-500 hover:bg-cyan-600 disabled:opacity-60 text-black font-bold px-5 sm:px-6 py-3 rounded-2xl shadow-md shadow-cyan-500/30"
             >
-              {sending ? "Enviando..." : "Enviar"}
+              {sending ? "..." : "Enviar"}
             </button>
           </div>
         </div>
