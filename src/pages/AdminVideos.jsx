@@ -11,7 +11,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Video, Trash2, Search, Loader2, Eye, Edit } from "lucide-react";
+import {
+  Video,
+  Trash2,
+  Search,
+  Loader2,
+  Eye,
+  Edit,
+  CheckCircle,
+  XCircle,
+  Clock3,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import EditVideoModal from "@/components/video/EditVideoModal";
@@ -87,6 +97,26 @@ export default function AdminVideos() {
     }
   };
 
+  const handleChangeStatus = async (videoId, newStatus) => {
+    setUpdatingId(videoId);
+
+    try {
+      const { error } = await supabase
+        .from("videos")
+        .update({ status: newStatus })
+        .eq("id", videoId);
+
+      if (error) throw error;
+
+      await refreshVideos();
+    } catch (error) {
+      console.error("Error cambiando estado:", error);
+      alert("No se pudo actualizar el estado del video.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleDelete = async (video) => {
     const ok = window.confirm(
       `¿Estás seguro de eliminar "${video.title}"? Esta acción no se puede deshacer.`
@@ -130,7 +160,7 @@ export default function AdminVideos() {
 
   if (isLoadingAuth || !isReady) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-5xl flex justify-center">
+      <div className="container mx-auto px-4 py-8 max-w-6xl flex justify-center">
         <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
       </div>
     );
@@ -138,7 +168,7 @@ export default function AdminVideos() {
 
   if (!currentUser || currentUser.role !== "admin") {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="text-center py-20 bg-gray-900/50 rounded-2xl border border-gray-700">
           <Video className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400">Acceso restringido.</p>
@@ -148,14 +178,16 @@ export default function AdminVideos() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
           <Video className="w-6 h-6 text-red-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Gestión de Videos</h1>
-          <p className="text-gray-400 text-sm">Cambiar categoría, editar o eliminar videos</p>
+          <p className="text-gray-400 text-sm">
+            Cambiar categoría, aprobar, editar o eliminar videos
+          </p>
         </div>
       </div>
 
@@ -201,94 +233,135 @@ export default function AdminVideos() {
             return (
               <div
                 key={video.id}
-                className={`flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border transition-all ${
+                className={`flex flex-col gap-4 p-4 rounded-xl border transition-all ${
                   isUpdating ? "opacity-50" : "bg-gray-900/60 border-gray-700"
                 }`}
               >
-                <div className="w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
-                  {video.thumbnail_url ? (
-                    <img
-                      src={video.thumbnail_url}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-600">
-                      <Video className="w-6 h-6" />
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  <div className="w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                    {video.thumbnail_url ? (
+                      <img
+                        src={video.thumbnail_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-600">
+                        <Video className="w-6 h-6" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white truncate">{video.title}</p>
+
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-gray-500 text-xs">
+                        {video.created_by?.split("@")[0] || "usuario"}
+                      </span>
+
+                      <span className="text-gray-600 text-xs">•</span>
+
+                      <span className="text-gray-500 text-xs">
+                        {video.created_at
+                          ? new Date(video.created_at).toLocaleDateString()
+                          : video.created_date
+                          ? new Date(video.created_date).toLocaleDateString()
+                          : ""}
+                      </span>
+
+                      <Badge className={`${status.color} text-xs`}>
+                        {status.label}
+                      </Badge>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white truncate">{video.title}</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <Select
+                      value={video.religion || "otros"}
+                      onValueChange={(val) => handleChangeCategory(video.id, val)}
+                      disabled={isUpdating}
+                    >
+                      <SelectTrigger className="w-40 bg-gray-800 border-gray-600 text-white text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-gray-500 text-xs">
-                      {video.created_by?.split("@")[0] || "usuario"}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Link to={createPageUrl(`VideoDetail?id=${video.id}`)} target="_blank">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-gray-400 hover:text-cyan-400"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Link>
 
-                    <span className="text-gray-600 text-xs">•</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingVideo(video)}
+                        disabled={isUpdating}
+                        className="text-gray-400 hover:text-blue-400 hover:bg-blue-500/10"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
 
-                    <span className="text-gray-500 text-xs">
-                      {video.created_at
-                        ? new Date(video.created_at).toLocaleDateString()
-                        : video.created_date
-                        ? new Date(video.created_date).toLocaleDateString()
-                        : ""}
-                    </span>
-
-                    <Badge className={`${status.color} text-xs`}>
-                      {status.label}
-                    </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(video)}
+                        disabled={isUpdating}
+                        className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                <Select
-                  value={video.religion || "otros"}
-                  onValueChange={(val) => handleChangeCategory(video.id, val)}
-                  disabled={isUpdating}
-                >
-                  <SelectTrigger className="w-40 bg-gray-800 border-gray-600 text-white text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Link to={createPageUrl(`VideoDetail?id=${video.id}`)} target="_blank">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-cyan-400"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </Link>
-
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-800">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setEditingVideo(video)}
+                    type="button"
+                    size="sm"
+                    onClick={() => handleChangeStatus(video.id, "approved")}
                     disabled={isUpdating}
-                    className="text-gray-400 hover:text-blue-400 hover:bg-blue-500/10"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <Edit className="w-4 h-4" />
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Aprobar
                   </Button>
 
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(video)}
+                    type="button"
+                    size="sm"
+                    onClick={() => handleChangeStatus(video.id, "pending")}
                     disabled={isUpdating}
-                    className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                    variant="outline"
+                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-500/10"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Clock3 className="w-4 h-4 mr-2" />
+                    Pendiente
+                  </Button>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleChangeStatus(video.id, "rejected")}
+                    disabled={isUpdating}
+                    variant="outline"
+                    className="border-red-600 text-red-400 hover:bg-red-500/10"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Rechazar
                   </Button>
                 </div>
               </div>
