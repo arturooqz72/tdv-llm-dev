@@ -1,432 +1,433 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User as UserIcon, Edit, Save, X, MapPin, Globe, Star, Music, Clock, Heart, Calendar, Radio, Sparkles } from 'lucide-react';
+import {
+  User as UserIcon,
+  Edit,
+  Save,
+  X,
+  MapPin,
+  Globe,
+  Calendar,
+  Music,
+  Video,
+  Loader2,
+  Shield,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import BannerEditor from '@/components/BannerEditor';
-import NotificationSettings from '@/components/NotificationSettings';
-
-const religions = [
-  { value: 'lldm', label: 'LLDM' },
-  { value: 'cristianismo', label: 'Cristianismo' },
-  { value: 'islam', label: 'Islam' },
-  { value: 'judaismo', label: 'Judaísmo' },
-  { value: 'budismo', label: 'Budismo' },
-  { value: 'hinduismo', label: 'Hinduismo' },
-  { value: 'espiritualidad', label: 'Espiritualidad' },
-  { value: 'ateismo', label: 'Ateísmo' },
-  { value: 'agnosticismo', label: 'Agnosticismo' },
-  { value: 'otra', label: 'Otra' },
-  { value: 'prefiero_no_decir', label: 'Prefiero no decir' }
-];
+import PermissionGuard from '@/components/PermissionGuard';
 
 export default function UserProfile() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser, isLoadingAuth, refreshProfile } = useAuth();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [showBannerEditor, setShowBannerEditor] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
   const [editForm, setEditForm] = useState({
+    full_name: '',
     bio: '',
-    religion: '',
     location: '',
     website: '',
-    spiritual_interests: []
+  });
+
+  const {
+    data: profile,
+    isLoading: loadingProfile,
+    refetch: refetchProfile,
+  } = useQuery({
+    queryKey: ['profile-page', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  const { data: userStats, isLoading: loadingStats } = useQuery({
+    queryKey: ['profile-stats', currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser?.email) {
+        return {
+          totalVideos: 0,
+          totalAudios: 0,
+          activeAudios: 0,
+        };
+      }
+
+      const [
+        totalVideosResult,
+        totalAudiosResult,
+        activeAudiosResult,
+      ] = await Promise.all([
+        supabase
+          .from('videos')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', currentUser.email),
+        supabase
+          .from('audios')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', currentUser.email),
+        supabase
+          .from('audios')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', currentUser.email)
+          .eq('is_active', true),
+      ]);
+
+      if (totalVideosResult.error) throw totalVideosResult.error;
+      if (totalAudiosResult.error) throw totalAudiosResult.error;
+      if (activeAudiosResult.error) throw activeAudiosResult.error;
+
+      return {
+        totalVideos: totalVideosResult.count || 0,
+        totalAudios: totalAudiosResult.count || 0,
+        activeAudios: activeAudiosResult.count || 0,
+      };
+    },
+    enabled: !!currentUser?.email,
   });
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        setEditForm({
-          bio: user.bio || '',
-          religion: user.religion || '',
-          location: user.location || '',
-          website: user.website || '',
-          spiritual_interests: user.spiritual_interests || []
-        });
-      } catch (error) {
-        base44.auth.redirectToLogin();
-      }
-    };
-    loadUser();
-  }, []);
+    if (!profile) return;
 
-  const { data: favoriteStations = [] } = useQuery({
-    queryKey: ['favorite-stations', currentUser?.email],
-    queryFn: async () => {
-      const favorites = await base44.entities.FavoriteStation.filter({
-        user_email: currentUser.email
-      });
-      const stationIds = favorites.map(f => f.station_id);
-      if (stationIds.length === 0) return [];
-      const stations = await base44.entities.RadioStation.list();
-      return stations.filter(s => stationIds.includes(s.id));
-    },
-    enabled: !!currentUser
-  });
+    setEditForm({
+      full_name: profile.full_name || '',
+      bio: profile.bio || '',
+      location: profile.location || '',
+      website: profile.website || '',
+    });
+  }, [profile]);
 
-  const { data: listeningHistory = [] } = useQuery({
-    queryKey: ['listening-history', currentUser?.email],
-    queryFn: async () => {
-      const stats = await base44.entities.RadioListenerStats.filter(
-        { user_email: currentUser.email },
-        '-created_date',
-        20
-      );
-      const programIds = stats.map(s => s.program_id);
-      if (programIds.length === 0) return [];
-      const programs = await base44.entities.RadioProgram.list();
-      return stats.map(stat => ({
-        ...stat,
-        program: programs.find(p => p.id === stat.program_id)
-      })).filter(s => s.program);
-    },
-    enabled: !!currentUser
-  });
+  const joinedDate = useMemo(() => {
+    const rawDate = profile?.created_at || currentUser?.createdAt;
+    if (!rawDate) return null;
 
-  const { data: registeredEvents = [] } = useQuery({
-    queryKey: ['registered-events', currentUser?.email],
-    queryFn: async () => {
-      const registrations = await base44.entities.EventRegistration.filter({
-        user_email: currentUser.email,
-        status: 'confirmed'
-      });
-      const eventIds = registrations.map(r => r.event_id);
-      if (eventIds.length === 0) return [];
-      const events = await base44.entities.RadioEvent.list();
-      return events.filter(e => eventIds.includes(e.id));
-    },
-    enabled: !!currentUser
-  });
+    try {
+      return format(new Date(rawDate), "d 'de' MMMM yyyy", { locale: es });
+    } catch {
+      return null;
+    }
+  }, [profile?.created_at, currentUser?.createdAt]);
 
   const handleSaveProfile = async () => {
+    if (!currentUser?.id) return;
+
+    setSaving(true);
+    setSaveMessage('');
+
     try {
-      await base44.auth.updateMe(editForm);
-      const updatedUser = await base44.auth.me();
-      setCurrentUser(updatedUser);
+      const payload = {
+        full_name: editForm.full_name?.trim() || null,
+        bio: editForm.bio?.trim() || null,
+        location: editForm.location?.trim() || null,
+        website: editForm.website?.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(payload)
+        .eq('id', currentUser.id);
+
+      if (error) throw error;
+
+      await refetchProfile();
+      await refreshProfile();
       setIsEditing(false);
+      setSaveMessage('Perfil actualizado correctamente.');
+
+      setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
+      setSaveMessage(`Error al guardar: ${error.message || 'Error inesperado.'}`);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleBannerSave = async (file) => {
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await base44.auth.updateMe({ banner_url: file_url });
-      const updatedUser = await base44.auth.me();
-      setCurrentUser(updatedUser);
-    } catch (error) {
-      console.error('Error al subir banner:', error);
-    }
-  };
-
-  const addInterest = (interest) => {
-    if (interest && !editForm.spiritual_interests.includes(interest)) {
-      setEditForm({
-        ...editForm,
-        spiritual_interests: [...editForm.spiritual_interests, interest]
-      });
-    }
-  };
-
-  const removeInterest = (interest) => {
-    setEditForm({
-      ...editForm,
-      spiritual_interests: editForm.spiritual_interests.filter(i => i !== interest)
-    });
-  };
-
-  if (!currentUser) {
+  if (isLoadingAuth || loadingProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6">
-        <Skeleton className="h-64 w-full rounded-3xl" />
+        <div className="max-w-6xl mx-auto space-y-6">
+          <Skeleton className="h-64 w-full rounded-3xl" />
+          <Skeleton className="h-40 w-full rounded-3xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-12 px-6">
-      <BannerEditor
-        isOpen={showBannerEditor}
-        onClose={() => setShowBannerEditor(false)}
-        onSave={handleBannerSave}
-      />
-      
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-gray-800 rounded-3xl border-2 border-yellow-600 overflow-hidden mb-8">
-          <div className="relative h-48 bg-gradient-to-r from-yellow-600 to-yellow-500">
-            {currentUser.banner_url && (
-              <img src={currentUser.banner_url} alt="Banner" className="w-full h-full object-cover" />
-            )}
-            {isEditing && (
-              <Button
-                onClick={() => setShowBannerEditor(true)}
-                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70"
-              >
-                Cambiar Banner
-              </Button>
-            )}
-          </div>
-
-          <div className="px-8 pb-8">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 gap-6">
-              <div className="flex items-end gap-6">
-                <div className="w-32 h-32 rounded-2xl border-4 border-gray-800 bg-gradient-to-br from-yellow-500 to-yellow-600 overflow-hidden">
-                  {currentUser.profile_picture_url ? (
-                    <img src={currentUser.profile_picture_url} alt="Perfil" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-black text-5xl font-bold">
-                      {currentUser.email?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mb-4">
-                  <h1 className="text-3xl font-bold text-white mb-1">
-                    {currentUser.full_name || currentUser.email?.split('@')[0]}
-                  </h1>
-                  <p className="text-gray-400">{currentUser.email}</p>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => isEditing ? setIsEditing(false) : setIsEditing(true)}
-                variant={isEditing ? "outline" : "default"}
-                className={isEditing ? "" : "bg-gradient-to-r from-yellow-500 to-yellow-600 text-black"}
-              >
-                {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                {isEditing ? 'Cancelar' : 'Editar Perfil'}
-              </Button>
+    <PermissionGuard>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-gray-800 rounded-3xl border-2 border-yellow-600 overflow-hidden mb-8">
+            <div className="relative h-40 md:h-48 bg-gradient-to-r from-yellow-600 to-yellow-500">
+              <div className="absolute inset-0 bg-black/10" />
             </div>
 
-            {isEditing ? (
-              <div className="mt-8 space-y-4 max-w-2xl">
-                <Textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                  placeholder="Biografía"
-                  className="bg-gray-900 text-white border-gray-700"
-                />
-                <Select value={editForm.religion} onValueChange={(value) => setEditForm({ ...editForm, religion: value })}>
-                  <SelectTrigger className="bg-gray-900 text-white border-gray-700">
-                    <SelectValue placeholder="Religión" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {religions.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={editForm.location}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                  placeholder="Ubicación"
-                  className="bg-gray-900 text-white border-gray-700"
-                />
-                <Input
-                  value={editForm.website}
-                  onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                  placeholder="Sitio web"
-                  className="bg-gray-900 text-white border-gray-700"
-                />
-                <div>
-                  <Input
-                    placeholder="Intereses (Enter para agregar)"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addInterest(e.target.value);
-                        e.target.value = '';
-                      }
-                    }}
-                    className="bg-gray-900 text-white border-gray-700"
-                  />
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {editForm.spiritual_interests.map((interest, idx) => (
-                      <Badge key={idx} className="bg-yellow-600 text-black">
-                        {interest}
-                        <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => removeInterest(interest)} />
+            <div className="px-8 pb-8">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 gap-6">
+                <div className="flex items-end gap-6">
+                  <div className="w-32 h-32 rounded-2xl border-4 border-gray-800 bg-gradient-to-br from-yellow-500 to-yellow-600 overflow-hidden flex items-center justify-center">
+                    {profile?.avatar_url || currentUser?.photoURL ? (
+                      <img
+                        src={profile?.avatar_url || currentUser?.photoURL}
+                        alt="Perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-black text-5xl font-bold">
+                        {(profile?.email || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <h1 className="text-3xl font-bold text-white mb-1">
+                      {profile?.full_name || currentUser?.name || currentUser?.email?.split('@')[0] || 'Usuario'}
+                    </h1>
+                    <p className="text-gray-400">{profile?.email || currentUser?.email}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <Badge className="bg-yellow-600 text-black">
+                        {currentUser?.role === 'admin' ? 'Administrador' : 'Usuario'}
                       </Badge>
-                    ))}
+
+                      {joinedDate && (
+                        <Badge variant="outline" className="text-gray-300 border-gray-600">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {joinedDate}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <Button onClick={handleSaveProfile} className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black">
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar
+
+                <Button
+                  onClick={() => {
+                    if (isEditing) {
+                      setIsEditing(false);
+                      setEditForm({
+                        full_name: profile?.full_name || '',
+                        bio: profile?.bio || '',
+                        location: profile?.location || '',
+                        website: profile?.website || '',
+                      });
+                    } else {
+                      setIsEditing(true);
+                    }
+                  }}
+                  variant={isEditing ? 'outline' : 'default'}
+                  className={isEditing ? '' : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black'}
+                >
+                  {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
+                  {isEditing ? 'Cancelar' : 'Editar Perfil'}
                 </Button>
               </div>
-            ) : (
-              <div className="mt-6 space-y-4">
-                {currentUser.bio && <p className="text-gray-300">{currentUser.bio}</p>}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                  {currentUser.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {currentUser.location}
-                    </div>
-                  )}
-                  {currentUser.website && (
-                    <a href={currentUser.website} target="_blank" className="flex items-center gap-1 text-yellow-500 hover:underline">
-                      <Globe className="w-4 h-4" />
-                      {currentUser.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  )}
+
+              {saveMessage && (
+                <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-300">
+                  {saveMessage}
                 </div>
-                {currentUser.spiritual_interests?.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {currentUser.spiritual_interests.map((interest, idx) => (
-                      <Badge key={idx} className="bg-yellow-600 text-black">{interest}</Badge>
-                    ))}
+              )}
+
+              {isEditing ? (
+                <div className="mt-8 space-y-4 max-w-2xl">
+                  <Input
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    placeholder="Nombre completo"
+                    className="bg-gray-900 text-white border-gray-700"
+                  />
+
+                  <Textarea
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    placeholder="Biografía"
+                    className="bg-gray-900 text-white border-gray-700"
+                    rows={4}
+                  />
+
+                  <Input
+                    value={editForm.location}
+                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                    placeholder="Ubicación"
+                    className="bg-gray-900 text-white border-gray-700"
+                  />
+
+                  <Input
+                    value={editForm.website}
+                    onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                    placeholder="Sitio web"
+                    className="bg-gray-900 text-white border-gray-700"
+                  />
+
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Guardar
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  {profile?.bio && <p className="text-gray-300">{profile.bio}</p>}
+
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                    {profile?.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {profile.location}
+                      </div>
+                    )}
+
+                    {profile?.website && (
+                      <a
+                        href={profile.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-yellow-500 hover:underline"
+                      >
+                        <Globe className="w-4 h-4" />
+                        {profile.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatCard
+              title="Videos subidos"
+              value={loadingStats ? '...' : userStats?.totalVideos ?? 0}
+              icon={Video}
+            />
+            <StatCard
+              title="Audios subidos"
+              value={loadingStats ? '...' : userStats?.totalAudios ?? 0}
+              icon={Music}
+            />
+            <StatCard
+              title="Audios activos"
+              value={loadingStats ? '...' : userStats?.activeAudios ?? 0}
+              icon={Shield}
+            />
+          </div>
+
+          <Tabs defaultValue="resumen" className="w-full">
+            <TabsList className="bg-gray-800 mb-6">
+              <TabsTrigger value="resumen">Resumen</TabsTrigger>
+              <TabsTrigger value="actividad">Actividad</TabsTrigger>
+              <TabsTrigger value="cuenta">Cuenta</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="resumen">
+              <Card className="bg-gray-800 border-yellow-600">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <UserIcon className="w-5 h-5 text-yellow-500" />
+                    Resumen del Perfil
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-gray-300">
+                  <p>
+                    Aquí ya quedó limpio el perfil principal del usuario y conectado a Supabase.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InfoBox label="Correo" value={profile?.email || currentUser?.email || '—'} />
+                    <InfoBox label="Rol" value={currentUser?.role || 'user'} />
+                    <InfoBox label="Nombre" value={profile?.full_name || currentUser?.name || '—'} />
+                    <InfoBox label="Ubicación" value={profile?.location || '—'} />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="actividad">
+              <Card className="bg-gray-800 border-yellow-600">
+                <CardHeader>
+                  <CardTitle className="text-white">Actividad</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-gray-300">
+                  <p>Esta sección ya no depende de Base44.</p>
+                  <p>
+                    Más adelante aquí podemos conectar historial real, favoritos, eventos o estadísticas más avanzadas desde Supabase.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="cuenta">
+              <Card className="bg-gray-800 border-yellow-600">
+                <CardHeader>
+                  <CardTitle className="text-white">Cuenta</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-gray-300">
+                  <p>Estado de autenticación: activo</p>
+                  <p>ID de usuario: {currentUser?.id || '—'}</p>
+                  <p>Correo: {currentUser?.email || '—'}</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </PermissionGuard>
+  );
+}
+
+function StatCard({ title, value, icon: Icon }) {
+  return (
+    <Card className="bg-gray-800 border-gray-700">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm text-gray-400">{title}</p>
+            <p className="text-3xl font-bold text-white mt-2">{value}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-yellow-500" />
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-        {/* Notification Settings */}
-        <div className="mb-8">
-          <NotificationSettings currentUser={currentUser} />
-        </div>
-
-        {/* Tabs */}
-        <Tabs defaultValue="stations" className="w-full">
-          <TabsList className="bg-gray-800 mb-6">
-            <TabsTrigger value="stations">Estaciones ({favoriteStations.length})</TabsTrigger>
-            <TabsTrigger value="history">Historial ({listeningHistory.length})</TabsTrigger>
-            <TabsTrigger value="events">Eventos ({registeredEvents.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="stations">
-            <Card className="bg-gray-800 border-yellow-600">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  Estaciones Favoritas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {favoriteStations.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No tienes estaciones favoritas</p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {favoriteStations.map(station => (
-                      <Card key={station.id} className="bg-gray-900 border-gray-700">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Music className="w-10 h-10 text-yellow-500" />
-                            <div>
-                              <h4 className="text-white font-semibold">{station.name}</h4>
-                              <p className="text-sm text-gray-400">{station.genre}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history">
-            <Card className="bg-gray-800 border-yellow-600">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-yellow-500" />
-                  Historial de Escucha
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {listeningHistory.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No has escuchado programas aún</p>
-                ) : (
-                  <div className="space-y-3">
-                    {listeningHistory.map((stat, idx) => (
-                      <div key={idx} className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="text-white font-semibold">{stat.program?.title || 'Programa'}</h4>
-                            <p className="text-sm text-gray-400 line-clamp-1">{stat.program?.description}</p>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                              <span>{Math.floor(stat.listen_duration_seconds / 60)} min</span>
-                              {stat.completed && <Badge className="bg-green-600 text-white text-xs">Completado</Badge>}
-                              {stat.liked && <Heart className="w-4 h-4 fill-red-500 text-red-500" />}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="events">
-            <Card className="bg-gray-800 border-yellow-600">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-yellow-500" />
-                  Eventos Registrados
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {registeredEvents.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No estás registrado en eventos</p>
-                ) : (
-                  <div className="space-y-4">
-                    {registeredEvents.map(event => {
-                      const eventDate = new Date(event.event_date);
-                      const isPast = eventDate < new Date();
-                      
-                      return (
-                        <Card key={event.id} className="bg-gray-900 border-gray-700 hover:border-yellow-600 transition-all">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="text-white font-semibold">{event.title}</h4>
-                                  {event.status === 'live' && (
-                                    <Badge className="bg-red-500 text-white animate-pulse">EN VIVO</Badge>
-                                  )}
-                                  {isPast && <Badge className="bg-gray-600 text-white">Finalizado</Badge>}
-                                </div>
-                                <p className="text-sm text-gray-400 mb-2">{event.description}</p>
-                                <div className="text-xs text-gray-500 space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="w-3 h-3" />
-                                    {format(eventDate, "EEEE, d 'de' MMMM", { locale: es })}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="w-3 h-3" />
-                                    {format(eventDate, 'HH:mm', { locale: es })}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+function InfoBox({ label, value }) {
+  return (
+    <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className="text-white font-medium break-words">{value}</p>
     </div>
   );
 }
