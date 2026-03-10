@@ -10,6 +10,25 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 
+function getShortUserName(user) {
+  const rawName =
+    user?.displayName ||
+    user?.full_name ||
+    user?.name ||
+    user?.email ||
+    "Usuario";
+
+  const safeName = String(rawName).trim();
+
+  if (!safeName) return "Usuario";
+
+  if (safeName.includes("@")) {
+    return safeName.split("@")[0];
+  }
+
+  return safeName.split(" ")[0];
+}
+
 export default function TeamDesveladosRoom() {
   const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -49,7 +68,7 @@ export default function TeamDesveladosRoom() {
       await addDoc(collection(db, "team_desvelados_room_messages"), {
         text,
         userEmail: currentUser.email,
-        userName: currentUser.email,
+        userName: getShortUserName(currentUser),
         createdAt: serverTimestamp(),
       });
 
@@ -67,7 +86,7 @@ export default function TeamDesveladosRoom() {
       <div className="max-w-5xl mx-auto">
         <div className="bg-black/70 border border-cyan-500 rounded-2xl p-6 shadow-xl mb-4">
           <h1 className="text-3xl font-bold text-cyan-400 mb-2">
-            Sala Especial Team Desvelados
+            TDV Charla
           </h1>
 
           <p className="text-gray-300">
