@@ -30,7 +30,6 @@ import GroupChat from './pages/GroupChat';
 import Home from './pages/Home';
 import Index from './pages/Index';
 import JuegaYGana from './pages/JuegaYGana';
-import LiveRadioPlayer from './pages/LiveRadioPlayer';
 import LiveStream from './pages/LiveStream';
 import LiveStreams from './pages/LiveStreams';
 import Memorama from './pages/Memorama';
@@ -42,15 +41,9 @@ import Profile from './pages/Profile';
 import PublicAudios from './pages/PublicAudios';
 import QuienLoDijo from './pages/QuienLoDijo';
 import Radio from './pages/Radio';
-import RadioDashboard from './pages/RadioDashboard';
-import RadioEvents from './pages/RadioEvents';
-import RadioProgramDetail from './pages/RadioProgramDetail';
-import RadioSchedule from './pages/RadioSchedule';
-import RadioStats from './pages/RadioStats';
 import RankingJuegos from './pages/RankingJuegos';
 import Recommendations from './pages/Recommendations';
 import RoleManagement from './pages/RoleManagement';
-import StartLiveRadio from './pages/StartLiveRadio';
 import Suggestions from './pages/Suggestions';
 import TeamDesveladosRoom from './pages/TeamDesveladosRoom';
 import TriviaBiblica from './pages/TriviaBiblica';
@@ -90,7 +83,6 @@ export const PAGES = {
     "Home": Home,
     "Index": Index,
     "JuegaYGana": JuegaYGana,
-    "LiveRadioPlayer": LiveRadioPlayer,
     "LiveStream": LiveStream,
     "LiveStreams": LiveStreams,
     "Memorama": Memorama,
@@ -102,15 +94,9 @@ export const PAGES = {
     "PublicAudios": PublicAudios,
     "QuienLoDijo": QuienLoDijo,
     "Radio": Radio,
-    "RadioDashboard": RadioDashboard,
-    "RadioEvents": RadioEvents,
-    "RadioProgramDetail": RadioProgramDetail,
-    "RadioSchedule": RadioSchedule,
-    "RadioStats": RadioStats,
     "RankingJuegos": RankingJuegos,
     "Recommendations": Recommendations,
     "RoleManagement": RoleManagement,
-    "StartLiveRadio": StartLiveRadio,
     "Suggestions": Suggestions,
     "TeamDesveladosRoom": TeamDesveladosRoom,
     "TriviaBiblica": TriviaBiblica,
