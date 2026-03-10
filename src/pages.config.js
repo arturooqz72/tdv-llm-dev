@@ -10,11 +10,11 @@ import AdminChatRooms from './pages/AdminChatRooms';
 import AdminEscuchaYGana from './pages/AdminEscuchaYGana';
 import AdminNotifications from './pages/AdminNotifications';
 import AdminSaludos from './pages/AdminSaludos';
+import AdminStats from './pages/AdminStats';
 import AdminTrivia from './pages/AdminTrivia';
 import AdminVideos from './pages/AdminVideos';
 import Ahorcado from './pages/Ahorcado';
 import AllPrograms from './pages/AllPrograms';
-import AppStats from './pages/AppStats';
 import AudioManager from './pages/AudioManager';
 import Birthdays from './pages/Birthdays';
 import Chat from './pages/Chat';
@@ -63,11 +63,12 @@ export const PAGES = {
     "AdminEscuchaYGana": AdminEscuchaYGana,
     "AdminNotifications": AdminNotifications,
     "AdminSaludos": AdminSaludos,
+    "AdminStats": AdminStats,
     "AdminTrivia": AdminTrivia,
     "AdminVideos": AdminVideos,
     "Ahorcado": Ahorcado,
     "AllPrograms": AllPrograms,
-    "AppStats": AppStats,
+    "AppStats": AdminStats,
     "AudioManager": AudioManager,
     "Birthdays": Birthdays,
     "Chat": Chat,
