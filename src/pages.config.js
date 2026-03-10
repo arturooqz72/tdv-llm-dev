@@ -30,8 +30,6 @@ import GroupChat from './pages/GroupChat';
 import Home from './pages/Home';
 import Index from './pages/Index';
 import JuegaYGana from './pages/JuegaYGana';
-import LiveStream from './pages/LiveStream';
-import LiveStreams from './pages/LiveStreams';
 import Memorama from './pages/Memorama';
 import Moderation from './pages/Moderation';
 import MyAudios from './pages/MyAudios';
@@ -83,8 +81,6 @@ export const PAGES = {
     "Home": Home,
     "Index": Index,
     "JuegaYGana": JuegaYGana,
-    "LiveStream": LiveStream,
-    "LiveStreams": LiveStreams,
     "Memorama": Memorama,
     "Moderation": Moderation,
     "MyAudios": MyAudios,
