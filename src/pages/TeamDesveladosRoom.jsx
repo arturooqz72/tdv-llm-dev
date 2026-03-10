@@ -159,7 +159,7 @@ export default function TeamDesveladosRoom() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-4">
+            <div className="max-w-3xl mx-auto space-y-3">
               {messages.map((msg) => {
                 const isMine = msg.userEmail === currentUser?.email;
                 const name = msg.userName || msg.userEmail || "Usuario";
