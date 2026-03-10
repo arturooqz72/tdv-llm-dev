@@ -1,20 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 
-const VIDEO_STORAGE_KEYS = [
-  "tdv_videos",
-  "tdv_video_files",
-  "tdv_uploaded_videos",
-];
-
-const religions = [
-  { value: "lldm", label: "LLDM" },
-  { value: "cristianismo", label: "Cristianismo" },
+const categories = [
+  { value: "predicaciones", label: "Predicaciones" },
+  { value: "cantos", label: "Cantos" },
+  { value: "testimonios", label: "Testimonios" },
+  { value: "platicas", label: "Platicas" },
+  { value: "debates", label: "Debates" },
+  { value: "temas", label: "Temas" },
+  { value: "podcast", label: "Podcast" },
   { value: "otros", label: "Otros" },
 ];
 
@@ -24,29 +35,14 @@ const statusOptions = [
   { value: "rejected", label: "Rechazado" },
 ];
 
-function readJSON(key, fallback = []) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
 export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    title: video?.title || "",
-    description: video?.description || "",
-    religion: video?.religion || "otros",
-    topic: video?.topic || "",
-    tags: video?.tags?.join(", ") || "",
-    status: video?.status || "pending",
+    title: "",
+    description: "",
+    category: "otros",
+    topic: "",
+    tags: "",
+    status: "pending",
   });
   const [saving, setSaving] = useState(false);
 
@@ -54,9 +50,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
     setFormData({
       title: video?.title || "",
       description: video?.description || "",
-      religion: video?.religion || "otros",
+      category: video?.category || "otros",
       topic: video?.topic || "",
-      tags: video?.tags?.join(", ") || "",
+      tags: Array.isArray(video?.tags) ? video.tags.join(", ") : video?.tags || "",
       status: video?.status || "pending",
     });
   }, [video]);
@@ -73,44 +69,30 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      let updated = false;
+      const { error } = await supabase
+        .from("videos")
+        .update({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          topic: formData.topic,
+          tags: tagsArray,
+          status: formData.status,
+        })
+        .eq("id", video.id);
 
-      for (const key of VIDEO_STORAGE_KEYS) {
-        const collection = readJSON(key, []);
-        if (!Array.isArray(collection) || collection.length === 0) continue;
+      if (error) throw error;
 
-        const exists = collection.some((item) => String(item.id) === String(video.id));
-        if (!exists) continue;
-
-        const nextCollection = collection.map((item) =>
-          String(item.id) === String(video.id)
-            ? {
-                ...item,
-                title: formData.title,
-                description: formData.description,
-                religion: formData.religion,
-                topic: formData.topic,
-                tags: tagsArray,
-                status: formData.status,
-              }
-            : item
-        );
-
-        saveJSON(key, nextCollection);
-        updated = true;
-        break;
+      if (onSave) {
+        await onSave();
       }
 
-      if (!updated) {
-        alert("No se encontró el video para actualizar.");
-        return;
+      if (onClose) {
+        onClose();
       }
-
-      if (onSave) onSave();
-      if (onClose) onClose();
     } catch (error) {
       console.error("Error al actualizar video:", error);
-      alert("Error al guardar los cambios");
+      alert("Error al guardar los cambios del video.");
     } finally {
       setSaving(false);
     }
@@ -129,7 +111,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               required
             />
           </div>
@@ -139,7 +123,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               rows={4}
             />
           </div>
@@ -147,16 +133,18 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
           <div>
             <Label>Categoría *</Label>
             <Select
-              value={formData.religion}
-              onValueChange={(value) => setFormData({ ...formData, religion: value })}
+              value={formData.category}
+              onValueChange={(value) =>
+                setFormData({ ...formData, category: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {religions.map((rel) => (
-                  <SelectItem key={rel.value} value={rel.value}>
-                    {rel.label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -168,7 +156,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
             <Input
               id="topic"
               value={formData.topic}
-              onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, topic: e.target.value })
+              }
               placeholder="ej: oración, meditación"
             />
           </div>
@@ -178,7 +168,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
             <Input
               id="tags"
               value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, tags: e.target.value })
+              }
               placeholder="ej: fe, esperanza, amor"
             />
           </div>
@@ -187,7 +179,9 @@ export default function EditVideoModal({ video, isOpen, onClose, onSave }) {
             <Label>Estado</Label>
             <Select
               value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, status: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
