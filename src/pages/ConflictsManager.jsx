@@ -1,44 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
-
-const USER_STORAGE_KEY = 'tdv_current_user';
-
-function readStoredUser() {
-  try {
-    if (typeof window === 'undefined') return null;
-
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+import { useAuth } from '@/lib/AuthContext';
+import { createPageUrl } from '@/utils';
 
 export default function ConflictsManager() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user: currentUser, loading } = useAuth();
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const [conflicts] = useState([]);
   const [allPrograms] = useState([]);
 
   useEffect(() => {
-    const user = readStoredUser();
-    setCurrentUser(user);
+    if (loading) return;
 
-    if (!user || user?.role !== 'admin') {
-      window.location.href = '/';
+    if (!currentUser || currentUser?.role !== 'admin') {
+      window.location.href = createPageUrl('Home');
       return;
     }
 
-    setIsLoading(false);
-  }, []);
+    setIsCheckingAccess(false);
+  }, [currentUser, loading]);
 
-  if (!currentUser || isLoading) {
+  if (loading || isCheckingAccess) {
     return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6" />;
   }
 
