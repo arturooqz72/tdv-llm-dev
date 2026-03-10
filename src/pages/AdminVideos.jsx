@@ -83,7 +83,7 @@ export default function AdminVideos() {
     try {
       const { error } = await supabase
         .from("videos")
-        .update({ religion: newCategory })
+        .update({ category: newCategory })
         .eq("id", videoId);
 
       if (error) throw error;
@@ -152,7 +152,7 @@ export default function AdminVideos() {
         description.includes(term);
 
       const matchCat =
-        filterCategory === "all" || (v.religion || "otros") === filterCategory;
+        filterCategory === "all" || (v.category || "otros") === filterCategory;
 
       return matchSearch && matchCat;
     });
@@ -278,7 +278,7 @@ export default function AdminVideos() {
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <Select
-                      value={video.religion || "otros"}
+                      value={video.category || "otros"}
                       onValueChange={(val) => handleChangeCategory(video.id, val)}
                       disabled={isUpdating}
                     >
