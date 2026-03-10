@@ -103,21 +103,43 @@ export default function TeamDesveladosRoom() {
             ) : (
               messages.map((msg) => {
                 const isMine = msg.userEmail === currentUser?.email;
+                const name = msg.userName || msg.userEmail || "Usuario";
+                const initial = String(name).charAt(0).toUpperCase();
 
                 return (
                   <div
                     key={msg.id}
-                    className={`max-w-[80%] rounded-xl p-3 border ${
-                      isMine
-                        ? "ml-auto bg-cyan-500/20 border-cyan-500"
-                        : "bg-gray-900 border-gray-700"
+                    className={`flex gap-3 ${
+                      isMine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <p className="text-cyan-400 text-sm font-bold mb-1">
-                      {isMine ? "Tú" : msg.userName || msg.userEmail || "Usuario"}
-                    </p>
+                    {!isMine && (
+                      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold shadow-md flex-shrink-0">
+                        {initial}
+                      </div>
+                    )}
 
-                    <p className="text-white whitespace-pre-wrap">{msg.text}</p>
+                    <div
+                      className={`max-w-[70%] rounded-xl p-3 border ${
+                        isMine
+                          ? "bg-cyan-500/20 border-cyan-500"
+                          : "bg-gray-900 border-gray-700"
+                      }`}
+                    >
+                      <p className="text-cyan-400 text-sm font-bold mb-1">
+                        {isMine ? "Tú" : name}
+                      </p>
+
+                      <p className="text-white whitespace-pre-wrap">
+                        {msg.text}
+                      </p>
+                    </div>
+
+                    {isMine && (
+                      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-bold shadow-md flex-shrink-0">
+                        {initial}
+                      </div>
+                    )}
                   </div>
                 );
               })
