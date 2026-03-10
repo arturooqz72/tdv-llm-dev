@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,15 +16,14 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import EditVideoModal from "@/components/video/EditVideoModal";
 
-const VIDEO_STORAGE_KEYS = [
-  "tdv_videos",
-  "tdv_video_files",
-  "tdv_uploaded_videos",
-];
-
 const categories = [
-  { value: "lldm", label: "LLDM", color: "bg-yellow-500/20 text-yellow-400" },
-  { value: "cristianismo", label: "Cristiano", color: "bg-blue-500/20 text-blue-400" },
+  { value: "predicaciones", label: "Predicaciones", color: "bg-yellow-500/20 text-yellow-400" },
+  { value: "cantos", label: "Cantos", color: "bg-pink-500/20 text-pink-400" },
+  { value: "testimonios", label: "Testimonios", color: "bg-blue-500/20 text-blue-400" },
+  { value: "platicas", label: "Platicas", color: "bg-green-500/20 text-green-400" },
+  { value: "debates", label: "Debates", color: "bg-red-500/20 text-red-400" },
+  { value: "temas", label: "Temas", color: "bg-cyan-500/20 text-cyan-400" },
+  { value: "podcast", label: "Podcast", color: "bg-orange-500/20 text-orange-400" },
   { value: "otros", label: "Otros", color: "bg-purple-500/20 text-purple-400" },
 ];
 
@@ -27,31 +33,6 @@ const statusLabels = {
   rejected: { label: "Rechazado", color: "bg-red-500/20 text-red-400" },
 };
 
-function readJSON(key, fallback = []) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function findVideoCollection() {
-  for (const key of VIDEO_STORAGE_KEYS) {
-    const collection = readJSON(key, []);
-    if (Array.isArray(collection) && collection.length > 0) {
-      return { key, collection };
-    }
-  }
-  return { key: VIDEO_STORAGE_KEYS[0], collection: [] };
-}
-
 export default function AdminVideos() {
   const { user: currentUser, isLoadingAuth } = useAuth();
 
@@ -60,21 +41,26 @@ export default function AdminVideos() {
   const [updatingId, setUpdatingId] = useState(null);
   const [editingVideo, setEditingVideo] = useState(null);
   const [videos, setVideos] = useState([]);
-  const [storageKey, setStorageKey] = useState(VIDEO_STORAGE_KEYS[0]);
   const [isReady, setIsReady] = useState(false);
 
-  const refreshVideos = () => {
-    const { key, collection } = findVideoCollection();
+  const refreshVideos = async () => {
+    try {
+      setIsReady(false);
 
-    const sorted = [...collection].sort((a, b) => {
-      const dateA = new Date(a.created_date || 0).getTime();
-      const dateB = new Date(b.created_date || 0).getTime();
-      return dateB - dateA;
-    });
+      const { data, error } = await supabase
+        .from("videos")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    setStorageKey(key);
-    setVideos(sorted);
-    setIsReady(true);
+      if (error) throw error;
+
+      setVideos(data || []);
+    } catch (error) {
+      console.error("Error cargando videos:", error);
+      setVideos([]);
+    } finally {
+      setIsReady(true);
+    }
   };
 
   useEffect(() => {
@@ -85,15 +71,14 @@ export default function AdminVideos() {
     setUpdatingId(videoId);
 
     try {
-      const collection = readJSON(storageKey, []);
-      const nextCollection = collection.map((video) =>
-        String(video.id) === String(videoId)
-          ? { ...video, religion: newCategory }
-          : video
-      );
+      const { error } = await supabase
+        .from("videos")
+        .update({ religion: newCategory })
+        .eq("id", videoId);
 
-      saveJSON(storageKey, nextCollection);
-      refreshVideos();
+      if (error) throw error;
+
+      await refreshVideos();
     } catch (error) {
       console.error("Error cambiando categoría:", error);
       alert("No se pudo actualizar la categoría.");
@@ -111,13 +96,11 @@ export default function AdminVideos() {
     setUpdatingId(video.id);
 
     try {
-      const collection = readJSON(storageKey, []);
-      const nextCollection = collection.filter(
-        (item) => String(item.id) !== String(video.id)
-      );
+      const { error } = await supabase.from("videos").delete().eq("id", video.id);
 
-      saveJSON(storageKey, nextCollection);
-      refreshVideos();
+      if (error) throw error;
+
+      await refreshVideos();
     } catch (error) {
       console.error("Error eliminando video:", error);
       alert("No se pudo eliminar el video.");
@@ -130,10 +113,16 @@ export default function AdminVideos() {
     return videos.filter((v) => {
       const title = v.title?.toLowerCase() || "";
       const createdBy = v.created_by?.toLowerCase() || "";
+      const description = v.description?.toLowerCase() || "";
       const term = searchTerm.toLowerCase();
 
-      const matchSearch = title.includes(term) || createdBy.includes(term);
-      const matchCat = filterCategory === "all" || v.religion === filterCategory;
+      const matchSearch =
+        title.includes(term) ||
+        createdBy.includes(term) ||
+        description.includes(term);
+
+      const matchCat =
+        filterCategory === "all" || (v.religion || "otros") === filterCategory;
 
       return matchSearch && matchCat;
     });
@@ -166,7 +155,7 @@ export default function AdminVideos() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Gestión de Videos</h1>
-          <p className="text-gray-400 text-sm">Cambiar categoría o eliminar videos</p>
+          <p className="text-gray-400 text-sm">Cambiar categoría, editar o eliminar videos</p>
         </div>
       </div>
 
@@ -176,13 +165,13 @@ export default function AdminVideos() {
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por título o usuario..."
+            placeholder="Buscar por título, descripción o usuario..."
             className="pl-10 bg-gray-800 border-gray-600 text-white"
           />
         </div>
 
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-40 bg-gray-800 border-gray-600 text-white">
+          <SelectTrigger className="w-48 bg-gray-800 border-gray-600 text-white">
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
@@ -232,16 +221,22 @@ export default function AdminVideos() {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white truncate">{video.title}</p>
+
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-gray-500 text-xs">
                       {video.created_by?.split("@")[0] || "usuario"}
                     </span>
+
                     <span className="text-gray-600 text-xs">•</span>
+
                     <span className="text-gray-500 text-xs">
-                      {video.created_date
+                      {video.created_at
+                        ? new Date(video.created_at).toLocaleDateString()
+                        : video.created_date
                         ? new Date(video.created_date).toLocaleDateString()
                         : ""}
                     </span>
+
                     <Badge className={`${status.color} text-xs`}>
                       {status.label}
                     </Badge>
@@ -253,7 +248,7 @@ export default function AdminVideos() {
                   onValueChange={(val) => handleChangeCategory(video.id, val)}
                   disabled={isUpdating}
                 >
-                  <SelectTrigger className="w-36 bg-gray-800 border-gray-600 text-white text-sm">
+                  <SelectTrigger className="w-40 bg-gray-800 border-gray-600 text-white text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -307,8 +302,8 @@ export default function AdminVideos() {
           video={editingVideo}
           isOpen={!!editingVideo}
           onClose={() => setEditingVideo(null)}
-          onSave={() => {
-            refreshVideos();
+          onSave={async () => {
+            await refreshVideos();
             setEditingVideo(null);
           }}
         />
