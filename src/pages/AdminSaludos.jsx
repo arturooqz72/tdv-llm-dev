@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/lib/AuthContext';
 import {
   Loader2,
   Download,
@@ -12,42 +13,17 @@ import {
   Filter
 } from 'lucide-react';
 
-const USER_STORAGE_KEY = 'tdv_current_user';
-
-function readStoredUser() {
-  try {
-    if (typeof window === 'undefined') return null;
-
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export default function AdminSaludos() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: currentUser, loading } = useAuth();
   const [filter, setFilter] = useState('all');
   const [adminNotes, setAdminNotes] = useState({});
   const [allGreetings, setAllGreetings] = useState([]);
+  const [accessChecked, setAccessChecked] = useState(false);
 
   useEffect(() => {
-    const user = readStoredUser();
-    setCurrentUser(user);
-
-    if (!user || user.role !== 'admin') {
-      window.location.href = '/';
-      return;
-    }
-
-    setLoading(false);
-  }, []);
+    if (loading) return;
+    setAccessChecked(true);
+  }, [loading]);
 
   const handleStatusChange = async (greeting, newStatus) => {
     setAllGreetings((prev) =>
@@ -110,7 +86,7 @@ export default function AdminSaludos() {
     );
   };
 
-  if (loading) {
+  if (loading || !accessChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
@@ -118,10 +94,20 @@ export default function AdminSaludos() {
     );
   }
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-400">Acceso restringido a administradores</p>
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="text-center">
+          <p className="text-red-400 text-lg font-semibold">Debes iniciar sesión para acceder.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <p className="text-red-400 text-lg font-semibold">Acceso restringido a administradores</p>
       </div>
     );
   }
@@ -227,7 +213,7 @@ export default function AdminSaludos() {
 
                   <Textarea
                     placeholder="Agregar nota administrativa (opcional)"
-                    value={adminNotes[greeting.id] || greeting.admin_note || ''}
+                    value={adminNotes[greeting.id] ?? greeting.admin_note ?? ''}
                     onChange={(e) =>
                       setAdminNotes((prev) => ({
                         ...prev,
