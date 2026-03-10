@@ -8,20 +8,44 @@ export default async function handler(req, res) {
     const applicationKey = process.env.B2_APPLICATION_KEY;
     const bucketName = process.env.B2_BUCKET_NAME;
     const endpoint = process.env.B2_ENDPOINT;
+    const publicBaseUrl = process.env.B2_PUBLIC_BASE_URL;
 
-    if (!keyId || !applicationKey || !bucketName || !endpoint) {
+    if (!keyId || !applicationKey || !bucketName) {
       return res.status(500).json({
         error: "Faltan variables de entorno de Backblaze en Vercel.",
       });
     }
 
-    const { fileName, folder } = req.body || {};
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const { fileName, folder } = body;
 
-    if (!fileName) {
+    if (!fileName || typeof fileName !== "string") {
       return res.status(400).json({
-        error: "Falta fileName.",
+        error: "Falta fileName válido.",
       });
     }
+
+    const cleanFileName = fileName
+      .trim()
+      .replace(/[^\w.\- ]+/g, "")
+      .replace(/\s+/g, "-");
+
+    if (!cleanFileName) {
+      return res.status(400).json({
+        error: "fileName no es válido.",
+      });
+    }
+
+    const cleanFolder =
+      typeof folder === "string" && folder.trim()
+        ? folder
+            .trim()
+            .replace(/^\/+|\/+$/g, "")
+            .replace(/[^\w\-\/]+/g, "")
+        : "";
+
+    const safeFolder = cleanFolder ? `${cleanFolder}/` : "";
+    const finalFileName = `${safeFolder}${Date.now()}-${cleanFileName}`;
 
     const authString = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
 
@@ -39,7 +63,7 @@ export default async function handler(req, res) {
 
     if (!authResponse.ok) {
       return res.status(500).json({
-        error: authData?.message || "No se pudo autorizar con Backblaze.",
+        error: authData?.message || authData?.code || "No se pudo autorizar con Backblaze.",
       });
     }
 
@@ -62,7 +86,7 @@ export default async function handler(req, res) {
 
     if (!listBucketsResponse.ok) {
       return res.status(500).json({
-        error: listBucketsData?.message || "No se pudo obtener el bucket.",
+        error: listBucketsData?.message || listBucketsData?.code || "No se pudo obtener el bucket.",
       });
     }
 
@@ -94,16 +118,17 @@ export default async function handler(req, res) {
 
     if (!uploadUrlResponse.ok) {
       return res.status(500).json({
-        error: uploadUrlData?.message || "No se pudo obtener upload URL.",
+        error: uploadUrlData?.message || uploadUrlData?.code || "No se pudo obtener upload URL.",
       });
     }
 
-    const safeFolder = folder ? `${folder.replace(/^\/+|\/+$/g, "")}/` : "";
-    const finalFileName = `${safeFolder}${Date.now()}-${fileName}`;
+    let publicUrl = null;
 
-    const regionMatch = endpoint.match(/s3\.([^.]+)\.backblazeb2\.com$/);
-    const region = regionMatch?.[1] || "us-west-004";
-    const publicUrl = `https://f${region.replace("us-west-", "")}.backblazeb2.com/file/${bucketName}/${finalFileName}`;
+    if (publicBaseUrl) {
+      publicUrl = `${publicBaseUrl.replace(/\/+$/, "")}/${finalFileName}`;
+    } else if (endpoint) {
+      publicUrl = `${endpoint.replace(/\/+$/, "")}/file/${bucketName}/${finalFileName}`;
+    }
 
     return res.status(200).json({
       uploadUrl: uploadUrlData.uploadUrl,
