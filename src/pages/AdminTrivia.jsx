@@ -1,33 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
+
+const TRIVIA_ADMIN_STORAGE_KEY = 'tdv_trivia_admin_config';
+
+function readTriviaConfig() {
+  try {
+    if (typeof window === 'undefined') return { trivia_concurso_activo: false };
+
+    const raw = localStorage.getItem(TRIVIA_ADMIN_STORAGE_KEY);
+    if (!raw) return { trivia_concurso_activo: false };
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return { trivia_concurso_activo: false };
+    }
+
+    return {
+      trivia_concurso_activo: parsed.trivia_concurso_activo === true,
+    };
+  } catch {
+    return { trivia_concurso_activo: false };
+  }
+}
+
+function saveTriviaConfig(config) {
+  try {
+    if (typeof window === 'undefined') return;
+
+    localStorage.setItem(
+      TRIVIA_ADMIN_STORAGE_KEY,
+      JSON.stringify({
+        trivia_concurso_activo: config.trivia_concurso_activo === true,
+      })
+    );
+  } catch (error) {
+    console.error('Error guardando configuración de trivia:', error);
+  }
+}
 
 export default function AdminTrivia() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: currentUser, loading } = useAuth();
   const [concursoActivo, setConcursoActivo] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        
-        if (user?.role === 'admin') {
-          // Cargar estado del concurso (puedes guardarlo en User o crear una entidad)
-          setConcursoActivo(user.trivia_concurso_activo || false);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
+    const config = readTriviaConfig();
+    setConcursoActivo(config.trivia_concurso_activo);
+    setConfigLoaded(true);
   }, []);
 
   const toggleConcurso = async () => {
@@ -36,7 +59,7 @@ export default function AdminTrivia() {
     setSaving(true);
     try {
       const nuevoEstado = !concursoActivo;
-      await base44.auth.updateMe({ trivia_concurso_activo: nuevoEstado });
+      saveTriviaConfig({ trivia_concurso_activo: nuevoEstado });
       setConcursoActivo(nuevoEstado);
     } catch (error) {
       console.error(error);
@@ -46,7 +69,7 @@ export default function AdminTrivia() {
     }
   };
 
-  if (loading) {
+  if (loading || !configLoaded) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <Card className="p-6 bg-gray-800 border-cyan-500">
@@ -61,12 +84,6 @@ export default function AdminTrivia() {
       <div className="p-6 max-w-3xl mx-auto">
         <Card className="p-6 bg-gray-800 border-cyan-500">
           <p className="mb-3 text-white">Debes iniciar sesión para acceder.</p>
-          <Button
-            onClick={() => base44.auth.redirectToLogin()}
-            className="bg-cyan-500 hover:bg-cyan-600 text-black"
-          >
-            Iniciar sesión
-          </Button>
         </Card>
       </div>
     );
@@ -116,8 +133,9 @@ export default function AdminTrivia() {
 
         <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
           <p className="text-sm text-gray-400">
-            <strong className="text-white">Nota:</strong> Cuando el concurso está activo, los usuarios pueden
-            participar en la Trivia Bíblica y sus puntajes se registrarán para el ranking.
+            <strong className="text-white">Nota:</strong> Este panel ya usa la sesión actual con useAuth().
+            El estado del concurso quedó guardándose temporalmente en almacenamiento local del navegador
+            mientras terminamos de retirar dependencias antiguas.
           </p>
         </div>
       </Card>
