@@ -1,295 +1,137 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Heart, Share2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import VideoPlayer from "@/components/video/VideoPlayer";
-import { useAuth } from "@/lib/AuthContext";
-
-const VIDEO_STORAGE_KEYS = [
-  "tdv_videos",
-  "tdv_video_files",
-  "tdv_uploaded_videos",
-];
-
-const VIDEO_LIKES_STORAGE_KEY = "tdv_video_likes";
-
-function readJSON(key, fallback = []) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function readStoredVideos() {
-  for (const key of VIDEO_STORAGE_KEYS) {
-    const data = readJSON(key, []);
-    if (Array.isArray(data) && data.length > 0) {
-      return data;
-    }
-  }
-  return [];
-}
-
-function readStoredLikes() {
-  return readJSON(VIDEO_LIKES_STORAGE_KEY, []);
-}
-
-function saveStoredLikes(likes) {
-  localStorage.setItem(VIDEO_LIKES_STORAGE_KEY, JSON.stringify(likes));
-}
+import { ArrowLeft, Video, Loader2, Calendar, User } from "lucide-react";
+import { createPageUrl } from "@/utils";
 
 export default function VideoDetail() {
-  const { user: currentUser } = useAuth();
-  const urlParams = new URLSearchParams(window.location.search);
-  const videoId = urlParams.get("id");
+  const [searchParams] = useSearchParams();
+  const videoId = searchParams.get("id");
 
-  const [video, setVideo] = useState(null);
-  const [videoLoading, setVideoLoading] = useState(true);
-  const [liked, setLiked] = useState(false);
+  const {
+    data: video,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["video-detail", videoId],
+    queryFn: async () => {
+      if (!videoId) return null;
 
-  useEffect(() => {
-    setVideoLoading(true);
+      const { data, error } = await supabase
+        .from("videos")
+        .select("*")
+        .eq("id", videoId)
+        .single();
 
-    const videos = readStoredVideos();
-    const foundVideo = videos.find((item) => String(item.id) === String(videoId));
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!videoId,
+  });
 
-    if (!foundVideo) {
-      setVideo(null);
-      setVideoLoading(false);
-      return;
-    }
-
-    const nextVideo = {
-      ...foundVideo,
-      views_count: (foundVideo.views_count || 0) + 1,
-    };
-
-    setVideo(nextVideo);
-
-    // guardar incremento de vistas en la misma colección encontrada
-    for (const key of VIDEO_STORAGE_KEYS) {
-      const collection = readJSON(key, []);
-      if (!Array.isArray(collection) || collection.length === 0) continue;
-
-      const exists = collection.some((item) => String(item.id) === String(videoId));
-      if (!exists) continue;
-
-      const updated = collection.map((item) =>
-        String(item.id) === String(videoId)
-          ? { ...item, views_count: (item.views_count || 0) + 1 }
-          : item
-      );
-
-      localStorage.setItem(key, JSON.stringify(updated));
-      break;
-    }
-
-    setVideoLoading(false);
-  }, [videoId]);
-
-  useEffect(() => {
-    if (!currentUser?.email || !videoId) {
-      setLiked(false);
-      return;
-    }
-
-    const likes = readStoredLikes();
-    const alreadyLiked = likes.some(
-      (item) =>
-        String(item.video_id) === String(videoId) &&
-        item.user_email === currentUser.email
-    );
-
-    setLiked(alreadyLiked);
-  }, [currentUser, videoId]);
-
-  const likesCount = useMemo(() => {
-    if (!videoId) return 0;
-    const likes = readStoredLikes();
-    return likes.filter((item) => String(item.video_id) === String(videoId)).length;
-  }, [videoId, liked, video]);
-
-  const handleLike = () => {
-    if (!currentUser?.email || !videoId) return;
-
-    const likes = readStoredLikes();
-
-    if (liked) {
-      const updatedLikes = likes.filter(
-        (item) =>
-          !(
-            String(item.video_id) === String(videoId) &&
-            item.user_email === currentUser.email
-          )
-      );
-      saveStoredLikes(updatedLikes);
-      setLiked(false);
-      return;
-    }
-
-    const newLike = {
-      id: crypto.randomUUID(),
-      video_id: videoId,
-      user_email: currentUser.email,
-      created_date: new Date().toISOString(),
-    };
-
-    saveStoredLikes([...likes, newLike]);
-    setLiked(true);
-  };
-
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: video?.title || "Video",
-          text: video?.description || "Mira este video",
-          url: shareUrl,
-        });
-        return;
-      }
-
-      await navigator.clipboard.writeText(shareUrl);
-      alert("Enlace copiado al portapapeles.");
-    } catch (error) {
-      console.error("Error compartiendo:", error);
-    }
-  };
-
-  if (videoLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
-        <div className="max-w-6xl mx-auto">
-          <Skeleton className="aspect-video w-full rounded-3xl mb-6" />
-          <Skeleton className="h-8 w-3/4 mb-4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+      <div className="container mx-auto px-4 py-10 max-w-5xl flex justify-center">
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
       </div>
     );
   }
 
-  if (!video) {
+  if (error || !video) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center px-6">
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 text-center max-w-xl w-full">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Video no encontrado
-          </h2>
-          <p className="text-gray-600">
-            Este video no existe en la copia actual o todavía no ha sido cargado.
+      <div className="container mx-auto px-4 py-10 max-w-4xl">
+        <div className="text-center py-20 bg-gray-900/50 rounded-2xl border border-gray-700">
+          <Video className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-white font-semibold">Video no encontrado</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Este video no existe en la base actual o todavía no ha sido cargado.
           </p>
+
+          <div className="mt-6">
+            <Link to={createPageUrl("Videos")}>
+              <Button className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver a Videos
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  const creatorName =
-    video.created_by?.split("@")[0] ||
-    video.userName ||
-    video.author ||
-    "Usuario";
-
-  const creatorInitial = creatorName?.charAt(0)?.toUpperCase() || "U";
+  const videoUrl =
+    video.video_url ||
+    video.file_url ||
+    video.url ||
+    "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-              <div className="aspect-video bg-black">
-                <VideoPlayer
-                  src={video.video_url}
-                  poster={video.thumbnail_url}
-                  autoPlay
-                  className="w-full h-full"
-                />
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="mb-6">
+        <Link to={createPageUrl("Videos")}>
+          <Button
+            variant="outline"
+            className="border-gray-600 text-white hover:bg-gray-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver
+          </Button>
+        </Link>
+      </div>
+
+      <div className="bg-gray-900/60 border border-gray-700 rounded-2xl overflow-hidden">
+        <div className="aspect-video bg-black">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              controls
+              className="w-full h-full"
+              preload="metadata"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <Video className="w-12 h-12 mx-auto mb-3" />
+                <p>No hay URL de video disponible</p>
               </div>
+            </div>
+          )}
+        </div>
 
-              <div className="p-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                  {video.title}
-                </h1>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-white mb-3">
+            {video.title || "Sin título"}
+          </h1>
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold">
-                      {creatorInitial}
-                    </div>
+          <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-4">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span>{video.created_by || "Usuario"}</span>
+            </div>
 
-                    <div>
-                      <p className="font-semibold text-gray-900">{creatorName}</p>
-                      <p className="text-sm text-gray-500">
-                        {video.religion || video.category || "Video"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={handleLike}
-                      disabled={!currentUser?.email}
-                      className={cn(
-                        "gap-2 rounded-full",
-                        liked && "text-red-500 border-red-500"
-                      )}
-                    >
-                      <Heart className={cn("w-5 h-5", liked && "fill-current")} />
-                      {likesCount}
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="gap-2 rounded-full"
-                      onClick={handleShare}
-                    >
-                      <Share2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap">
-                  <span>{video.views_count || 0} vistas</span>
-                  {video.created_date && (
-                    <span>
-                      {new Date(video.created_date).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-
-                {video.description && (
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {video.description}
-                    </p>
-                  </div>
-                )}
-              </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span>
+                {video.created_at
+                  ? new Date(video.created_at).toLocaleDateString()
+                  : "Sin fecha"}
+              </span>
             </div>
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">
-                  Comentarios
-                </h2>
-                <p className="text-gray-600">
-                  La sección de comentarios de esta copia está temporalmente en modo
-                  simple mientras se termina de quitar Base44.
-                </p>
-              </div>
+          {video.category && (
+            <div className="mb-4">
+              <span className="inline-flex px-3 py-1 rounded-full text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                {video.category}
+              </span>
             </div>
+          )}
+
+          <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+            {video.description || "Sin descripción."}
           </div>
         </div>
       </div>
