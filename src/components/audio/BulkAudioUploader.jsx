@@ -16,13 +16,14 @@ import {
 } from "lucide-react";
 
 const AUDIO_CATEGORIES = [
-  { value: "sermon", label: "Sermón" },
-  { value: "worship", label: "Adoración" },
-  { value: "prayer", label: "Oración" },
-  { value: "meditation", label: "Meditación" },
+  { value: "predicaciones", label: "Predicaciones" },
+  { value: "cantos", label: "Cantos" },
+  { value: "testimonios", label: "Testimonios" },
+  { value: "platicas", label: "Platicas" },
+  { value: "debates", label: "Debates" },
+  { value: "temas", label: "Temas" },
   { value: "podcast", label: "Podcast" },
-  { value: "music", label: "Música" },
-  { value: "other", label: "Otro" },
+  { value: "otros", label: "Otros" },
 ];
 
 const ACCEPTED_EXTENSIONS = [
@@ -40,7 +41,7 @@ const STORAGE_BUCKET = "audios";
 
 function getCategoryLabel(value) {
   return (
-    AUDIO_CATEGORIES.find((item) => item.value === value)?.label || "Otro"
+    AUDIO_CATEGORIES.find((item) => item.value === value)?.label || "Otros"
   );
 }
 
@@ -113,7 +114,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
         original_name: file.name,
         title: getBaseName(file.name),
         description: "",
-        category: "sermon",
+        category: "predicaciones",
         audio_url: "",
         file_size_mb: Number((file.size / (1024 * 1024)).toFixed(2)),
         is_active: true,
@@ -223,7 +224,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
     return {
       title: fileEntry.title.trim(),
       description: fileEntry.description?.trim() || "",
-      category: fileEntry.category || "other",
+      category: fileEntry.category || "otros",
       audio_url: audioUrl,
       file_size_mb: fileEntry.file_size_mb || 0,
       is_active:
@@ -239,6 +240,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
     }
 
     setSaving(true);
+    setUploading(true);
 
     try {
       const payload = [];
@@ -269,6 +271,7 @@ export default function BulkAudioUploader({ onSuccess, currentUser }) {
       );
     } finally {
       setSaving(false);
+      setUploading(false);
     }
   };
 
