@@ -50,6 +50,72 @@ function readMessages() {
   return Array.isArray(data) ? data : [];
 }
 
+function getDefaultRooms() {
+  return [
+    {
+      id: 'room-general',
+      name: 'General',
+      description: 'Sala pública para conversar con la comunidad.',
+      type: 'public',
+      category: 'general',
+      icon: '💬',
+      is_active: true,
+      members_count: 0,
+      last_message_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-oracion',
+      name: 'Oración',
+      description: 'Comparte peticiones y mensajes de oración.',
+      type: 'public',
+      category: 'oracion',
+      icon: '🙏',
+      is_active: true,
+      members_count: 0,
+      last_message_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-musica',
+      name: 'Música',
+      description: 'Sala para hablar de alabanzas, cantos y audios.',
+      type: 'public',
+      category: 'musica',
+      icon: '🎵',
+      is_active: true,
+      members_count: 0,
+      last_message_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-tdv',
+      name: 'Team Desvelados',
+      description: 'Sala especial privada para miembros autorizados.',
+      type: 'private',
+      category: 'lldm',
+      icon: '🔥',
+      is_active: true,
+      members_count: 0,
+      last_message_at: new Date().toISOString(),
+    },
+  ];
+}
+
+function ensureRoomsInitialized() {
+  const existingRooms = readJSON(CHAT_ROOMS_STORAGE_KEY, []);
+  if (!Array.isArray(existingRooms) || existingRooms.length === 0) {
+    saveJSON(CHAT_ROOMS_STORAGE_KEY, getDefaultRooms());
+  }
+
+  const existingMembers = readJSON(CHAT_ROOM_MEMBERS_STORAGE_KEY, []);
+  if (!Array.isArray(existingMembers)) {
+    saveJSON(CHAT_ROOM_MEMBERS_STORAGE_KEY, []);
+  }
+
+  const existingMessages = readJSON(CHAT_MESSAGES_STORAGE_KEY, []);
+  if (!Array.isArray(existingMessages)) {
+    saveJSON(CHAT_MESSAGES_STORAGE_KEY, []);
+  }
+}
+
 function emitChatUpdated() {
   window.dispatchEvent(new Event('tdv-chat-updated'));
 }
@@ -69,6 +135,7 @@ export default function AdminChatRooms() {
   };
 
   useEffect(() => {
+    ensureRoomsInitialized();
     refreshData();
 
     const onStorageUpdate = () => refreshData();
