@@ -1,4 +1,4 @@
-import React from "react";
+ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
@@ -55,7 +55,7 @@ export default function AdminStats() {
   const { user: currentUser, isLoadingAuth } = useAuth();
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-stats-v2"],
+    queryKey: ["admin-stats-v3"],
     queryFn: async () => {
       const results = await Promise.all([
         getTableCountSafe("profiles"),
@@ -64,9 +64,6 @@ export default function AdminStats() {
         getTableCountSafe("videos", { column: "status", value: "pending" }),
         getTableCountSafe("videos", { column: "status", value: "rejected" }),
         getTableCountSafe("audios"),
-        getTableCountSafe("audios", { column: "status", value: "approved" }),
-        getTableCountSafe("audios", { column: "status", value: "pending" }),
-        getTableCountSafe("audios", { column: "status", value: "rejected" }),
       ]);
 
       const [
@@ -76,9 +73,6 @@ export default function AdminStats() {
         pendingVideos,
         rejectedVideos,
         totalAudios,
-        approvedAudios,
-        pendingAudios,
-        rejectedAudios,
       ] = results;
 
       return {
@@ -89,9 +83,6 @@ export default function AdminStats() {
           pendingVideos: pendingVideos.count,
           rejectedVideos: rejectedVideos.count,
           totalAudios: totalAudios.count,
-          approvedAudios: approvedAudios.count,
-          pendingAudios: pendingAudios.count,
-          rejectedAudios: rejectedAudios.count,
           updatedAt: new Date().toISOString(),
         },
         tableResults: {
@@ -101,9 +92,6 @@ export default function AdminStats() {
           videosPending: pendingVideos,
           videosRejected: rejectedVideos,
           audios: totalAudios,
-          audiosApproved: approvedAudios,
-          audiosPending: pendingAudios,
-          audiosRejected: rejectedAudios,
         },
       };
     },
@@ -228,23 +216,26 @@ export default function AdminStats() {
                     <div className="space-y-4">
                       <MiniStatRow
                         label="Aprobados"
-                        value={data?.stats?.approvedAudios ?? 0}
+                        value="—"
                         icon={CheckCircle}
-                        valueClassName="text-green-400"
+                        valueClassName="text-gray-400"
                       />
                       <MiniStatRow
                         label="Pendientes"
-                        value={data?.stats?.pendingAudios ?? 0}
+                        value="—"
                         icon={Clock3}
-                        valueClassName="text-yellow-400"
+                        valueClassName="text-gray-400"
                       />
                       <MiniStatRow
                         label="Rechazados"
-                        value={data?.stats?.rejectedAudios ?? 0}
+                        value="—"
                         icon={Shield}
-                        valueClassName="text-red-400"
+                        valueClassName="text-gray-400"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      El resumen por estado de audios se activará cuando confirmemos el nombre real de la columna correspondiente.
+                    </p>
                   </CardContent>
                 </Card>
               </div>
