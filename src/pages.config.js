@@ -48,7 +48,6 @@ import Suggestions from './pages/Suggestions';
 import TeamDesveladosRoom from './pages/TeamDesveladosRoom';
 import TriviaBiblica from './pages/TriviaBiblica';
 import Upload from './pages/Upload';
-import UserProfile from './pages/UserProfile';
 import Users from './pages/Users';
 import VideoDetail from './pages/VideoDetail';
 import Videos from './pages/Videos';
@@ -102,7 +101,6 @@ export const PAGES = {
     "TeamDesveladosRoom": TeamDesveladosRoom,
     "TriviaBiblica": TriviaBiblica,
     "Upload": Upload,
-    "UserProfile": UserProfile,
     "Users": Users,
     "VideoDetail": VideoDetail,
     "Videos": Videos,
