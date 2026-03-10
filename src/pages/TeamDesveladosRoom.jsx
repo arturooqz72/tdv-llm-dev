@@ -59,6 +59,7 @@ function formatMessageTime(createdAt) {
 
 function isSameDay(a, b) {
   if (!a || !b) return false;
+
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
@@ -174,7 +175,6 @@ export default function TeamDesveladosRoom() {
       });
 
       setNewMessage("");
-
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -187,7 +187,7 @@ export default function TeamDesveladosRoom() {
   };
 
   const handleDeleteMessage = async (messageId, isMine) => {
-    if (!isMine || !messageId || deletingId) return;
+    if (!messageId || !isMine || deletingId) return;
 
     const confirmed = window.confirm("¿Eliminar este mensaje?");
     if (!confirmed) return;
@@ -213,58 +213,53 @@ export default function TeamDesveladosRoom() {
   const preparedMessages = useMemo(() => {
     return messages.map((msg, index) => {
       const previousMsg = index > 0 ? messages[index - 1] : null;
-      const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
-
-      const groupedWithPrevious = shouldGroupWithPrevious(msg, previousMsg);
-      const groupedWithNext = shouldGroupWithPrevious(nextMsg, msg);
 
       return {
         ...msg,
         showDateSeparator: shouldShowDateSeparator(msg, previousMsg),
         dateLabel: formatDayLabel(msg.createdAt),
-        groupedWithPrevious,
-        groupedWithNext,
+        groupedWithPrevious: shouldGroupWithPrevious(msg, previousMsg),
       };
     });
   }, [messages]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black px-3 py-4 sm:px-4 sm:py-6">
-      <div className="max-w-5xl mx-auto rounded-[28px] overflow-hidden shadow-2xl border border-cyan-500/30 backdrop-blur-xl bg-white/5">
-        <div className="px-5 py-4 sm:px-6 sm:py-5 bg-white/5 border-b border-cyan-500/20 backdrop-blur-xl">
+    <div className="min-h-screen px-3 py-4 sm:px-4 sm:py-6 bg-gradient-to-b from-[#06212d] via-[#0a2b3c] to-[#031018]">
+      <div className="max-w-5xl mx-auto rounded-[28px] overflow-hidden shadow-2xl border border-cyan-500/25 backdrop-blur-xl bg-white/[0.04]">
+        <div className="px-5 py-4 sm:px-6 sm:py-5 bg-[linear-gradient(180deg,rgba(19,47,65,0.86),rgba(36,40,48,0.82))] border-b border-cyan-500/15 backdrop-blur-xl">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-cyan-300 tracking-wide">
                 TDV Charla
               </h1>
-              <p className="text-gray-300 text-sm mt-1">
+              <p className="text-gray-200/90 text-sm mt-1">
                 Conversación privada entre miembros autorizados.
               </p>
             </div>
 
-            <div className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-cyan-300">
+            <div className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-cyan-200">
               Privado
             </div>
           </div>
         </div>
 
-        <div className="h-[67vh] sm:h-[69vh] overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:px-6 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_35%),linear-gradient(to_bottom,rgba(0,0,0,0.30),rgba(0,0,0,0.46))]">
+        <div className="h-[67vh] sm:h-[69vh] overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:px-6 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),transparent_32%),radial-gradient(circle_at_center,rgba(14,116,144,0.10),transparent_42%),linear-gradient(to_bottom,rgba(7,26,39,0.82),rgba(4,14,24,0.94))]">
           {preparedMessages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="max-w-sm text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-500/10 text-cyan-300 text-xl">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-500/10 text-cyan-300 text-xl shadow-lg shadow-cyan-500/10">
                   💬
                 </div>
-                <p className="text-cyan-200 font-semibold mb-1">
+                <p className="text-cyan-100 font-semibold mb-1">
                   Bienvenido a TDV Charla
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-300/80 text-sm">
                   Aún no hay mensajes. Sé el primero en escribir.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-2">
+            <div className="max-w-3xl mx-auto space-y-2 sm:space-y-3">
               {preparedMessages.map((msg) => {
                 const isMine = msg.userEmail === currentUser?.email;
                 const name = msg.userName || msg.userEmail || "Usuario";
@@ -275,7 +270,7 @@ export default function TeamDesveladosRoom() {
                   <React.Fragment key={msg.id}>
                     {msg.showDateSeparator && msg.dateLabel && (
                       <div className="flex justify-center py-2">
-                        <div className="rounded-full border border-cyan-500/20 bg-black/30 px-3 py-1 text-[11px] font-medium text-cyan-200/90 backdrop-blur">
+                        <div className="rounded-full border border-cyan-500/15 bg-cyan-500/5 px-3 py-1 text-[11px] font-medium text-cyan-100/90 backdrop-blur">
                           {msg.dateLabel}
                         </div>
                       </div>
@@ -288,14 +283,14 @@ export default function TeamDesveladosRoom() {
                     >
                       {isMine ? (
                         <div className="max-w-[82%] sm:max-w-[74%] md:max-w-[66%] mr-1 sm:mr-2">
-                          <div className="group rounded-3xl rounded-br-md px-4 py-3 shadow-md backdrop-blur-xl border bg-cyan-500/20 border-cyan-400/40 text-white">
+                          <div className="group rounded-3xl rounded-br-md px-4 py-3 shadow-md backdrop-blur-xl border bg-cyan-500/16 border-cyan-400/35 text-white">
                             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                               {msg.text}
                             </p>
 
                             <div className="mt-2 flex items-center justify-end gap-2">
                               {messageTime && (
-                                <span className="text-[11px] text-cyan-200/80">
+                                <span className="text-[11px] text-cyan-100/75">
                                   {messageTime}
                                 </span>
                               )}
@@ -306,7 +301,7 @@ export default function TeamDesveladosRoom() {
                                   handleDeleteMessage(msg.id, isMine)
                                 }
                                 disabled={deletingId === msg.id}
-                                className="text-[11px] text-cyan-200/70 hover:text-red-300 transition-colors disabled:opacity-50"
+                                className="text-[11px] text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50"
                                 title="Eliminar mensaje"
                               >
                                 {deletingId === msg.id ? "..." : "Eliminar"}
@@ -324,9 +319,9 @@ export default function TeamDesveladosRoom() {
                             <div className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0" />
                           )}
 
-                          <div className="rounded-3xl rounded-bl-md px-4 py-3 shadow-md backdrop-blur-xl border bg-white/10 border-white/20 text-white">
+                          <div className="rounded-3xl rounded-bl-md px-4 py-3 shadow-md backdrop-blur-xl border bg-white/[0.10] border-white/15 text-white">
                             {!msg.groupedWithPrevious && (
-                              <p className="text-xs font-semibold mb-1 text-cyan-400">
+                              <p className="text-xs font-semibold mb-1 text-cyan-300">
                                 {name}
                               </p>
                             )}
@@ -355,9 +350,9 @@ export default function TeamDesveladosRoom() {
           )}
         </div>
 
-        <div className="border-t border-cyan-500/20 bg-black/35 p-3 sm:p-4 backdrop-blur-xl">
+        <div className="border-t border-cyan-500/15 bg-[linear-gradient(180deg,rgba(10,24,34,0.90),rgba(8,18,28,0.94))] p-3 sm:p-4 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto flex items-end gap-2 sm:gap-3">
-            <div className="flex-1 rounded-3xl border border-white/20 bg-white/10 shadow-inner focus-within:border-cyan-400">
+            <div className="flex-1 rounded-3xl border border-white/15 bg-white/[0.08] shadow-inner focus-within:border-cyan-400/70">
               <textarea
                 ref={textareaRef}
                 value={newMessage}
