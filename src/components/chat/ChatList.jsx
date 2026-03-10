@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -200,26 +199,15 @@ export default function ChatList({ currentUser, onSelectChat }) {
       </div>
 
       <div className="p-4 border-t border-gray-200 space-y-2">
-        <Button
-          onClick={() => {
-            window.location.href = "/groupchat";
-          }}
-          variant="outline"
-          className="w-full justify-start gap-2"
-        >
-          <Users className="w-4 h-4" />
-          Chats (Salas)
-        </Button>
-
         {canAccessTDVChat && (
-          <Link to="/GroupChat?room=tdv">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2 border-cyan-500 text-cyan-500 hover:bg-cyan-500/10"
+          <Link to="/TeamDesveladosRoom">
+            <button
+              type="button"
+              className="w-full inline-flex items-center justify-start gap-2 rounded-md border border-cyan-500 px-4 py-2 text-cyan-500 hover:bg-cyan-500/10 transition-colors"
             >
               <Users className="w-4 h-4" />
               Team Desvelados Chat
-            </Button>
+            </button>
           </Link>
         )}
       </div>
