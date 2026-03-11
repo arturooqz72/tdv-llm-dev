@@ -70,7 +70,6 @@ export const PAGES = {
     "EscuchaYGanaResultados": EscuchaYGanaResultados,
     "Explore": Explore,
     "Ganadores": Ganadores,
-    "GoLive": GoLive,
     "Home": Home,
     "Index": Index,
     "JuegaYGana": JuegaYGana,
