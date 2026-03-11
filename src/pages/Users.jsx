@@ -235,11 +235,7 @@ export default function Users() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredUsers.map((user) => {
-              const religionEntry = religions.find((r) => r.value === user.religion);
-              const displayReligion =
-                religionEntry?.label ||
-                user.displayReligionLabel ||
-                '';
+              const displayReligion = user.displayReligionLabel || '';
 
               return (
                 <div
