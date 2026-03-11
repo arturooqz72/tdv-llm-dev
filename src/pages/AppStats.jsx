@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -27,22 +27,27 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 const COLORS = ['#EAB308', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+const LIMIT = 1000;
 
 export default function AppStats() {
   const { user: currentUser, isLoadingAuth } = useAuth();
-  const [limit] = useState(1000);
 
   const { data: videos = [], isLoading: loadingVideos } = useQuery({
-    queryKey: ['stats-videos', limit],
+    queryKey: ['stats-videos', LIMIT],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      try {
+        const { data, error } = await supabase
+          .from('videos')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(LIMIT);
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error cargando videos para estadísticas:', error);
+        return [];
+      }
     },
     enabled: !!currentUser
   });
@@ -50,49 +55,145 @@ export default function AppStats() {
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['stats-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error cargando usuarios para estadísticas:', error);
+        return [];
+      }
     },
     enabled: !!currentUser
   });
 
   const { data: comments = [], isLoading: loadingComments } = useQuery({
-    queryKey: ['stats-comments', limit],
+    queryKey: ['stats-comments', LIMIT],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      try {
+        const { data, error } = await supabase
+          .from('comments')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(LIMIT);
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error cargando comentarios para estadísticas:', error);
+        return [];
+      }
     },
     enabled: !!currentUser
   });
 
   const { data: audios = [], isLoading: loadingAudios } = useQuery({
-    queryKey: ['stats-audios', limit],
+    queryKey: ['stats-audios', LIMIT],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('audios')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      try {
+        const { data, error } = await supabase
+          .from('audios')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(LIMIT);
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error cargando audios para estadísticas:', error);
+        return [];
+      }
     },
     enabled: !!currentUser
   });
 
   const isLoading =
     isLoadingAuth || loadingVideos || loadingUsers || loadingComments || loadingAudios;
+
+  const metrics = useMemo(() => {
+    const totalUsers = users.length;
+    const totalVideos = videos.length;
+    const totalComments = comments.length;
+    const totalAudios = audios.length;
+
+    const totalVideoViews = videos.reduce(
+      (sum, v) => sum + Number(v.views_count || 0),
+      0
+    );
+
+    const totalVideoLikes = videos.reduce(
+      (sum, v) => sum + Number(v.likes_count || 0),
+      0
+    );
+
+    const totalActiveAudios = audios.filter((a) => a.is_active).length;
+
+    const usersByRoleCount = {};
+    users.forEach((user) => {
+      const role = user.role || 'user';
+      usersByRoleCount[role] = (usersByRoleCount[role] || 0) + 1;
+    });
+
+    const usersByRole = Object.entries(usersByRoleCount).map(([name, value]) => ({
+      name,
+      value
+    }));
+
+    const videosByReligionCount = {};
+    videos.forEach((video) => {
+      const religion = video.religion || 'sin_categoria';
+      videosByReligionCount[religion] = (videosByReligionCount[religion] || 0) + 1;
+    });
+
+    const videosByReligion = Object.entries(videosByReligionCount)
+      .map(([name, cantidad]) => ({ name, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 8);
+
+    const topVideos = [...videos]
+      .sort((a, b) => Number(b.views_count || 0) - Number(a.views_count || 0))
+      .slice(0, 5)
+      .map((video) => ({
+        title:
+          video.title && video.title.length > 30
+            ? `${video.title.substring(0, 30)}...`
+            : video.title || 'Sin título',
+        vistas: Number(video.views_count || 0)
+      }));
+
+    const contentTotals = [
+      { tipo: 'Usuarios', total: totalUsers },
+      { tipo: 'Videos', total: totalVideos },
+      { tipo: 'Comentarios', total: totalComments },
+      { tipo: 'Audios', total: totalAudios }
+    ];
+
+    const engagementTotals = [
+      { tipo: 'Vistas', total: totalVideoViews },
+      { tipo: 'Likes', total: totalVideoLikes },
+      { tipo: 'Comentarios', total: totalComments },
+      { tipo: 'Audios Activos', total: totalActiveAudios }
+    ];
+
+    return {
+      totalUsers,
+      totalVideos,
+      totalComments,
+      totalAudios,
+      totalVideoViews,
+      totalVideoLikes,
+      totalActiveAudios,
+      usersByRole,
+      videosByReligion,
+      topVideos,
+      contentTotals,
+      engagementTotals
+    };
+  }, [users, videos, comments, audios]);
 
   if (isLoading) {
     return (
@@ -117,73 +218,6 @@ export default function AppStats() {
     );
   }
 
-  const totalUsers = users.length;
-  const totalVideos = videos.length;
-  const totalComments = comments.length;
-  const totalAudios = audios.length;
-
-  const totalVideoViews = videos.reduce(
-    (sum, v) => sum + Number(v.views_count || 0),
-    0
-  );
-
-  const totalVideoLikes = videos.reduce(
-    (sum, v) => sum + Number(v.likes_count || 0),
-    0
-  );
-
-  const totalActiveAudios = audios.filter((a) => a.is_active).length;
-
-  const usersByRole = useMemo(() => {
-    const counts = {};
-    users.forEach((user) => {
-      const role = user.role || 'user';
-      counts[role] = (counts[role] || 0) + 1;
-    });
-
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [users]);
-
-  const videosByReligion = useMemo(() => {
-    const counts = {};
-    videos.forEach((video) => {
-      const religion = video.religion || 'sin_categoria';
-      counts[religion] = (counts[religion] || 0) + 1;
-    });
-
-    return Object.entries(counts)
-      .map(([name, cantidad]) => ({ name, cantidad }))
-      .sort((a, b) => b.cantidad - a.cantidad)
-      .slice(0, 8);
-  }, [videos]);
-
-  const topVideos = useMemo(() => {
-    return [...videos]
-      .sort((a, b) => Number(b.views_count || 0) - Number(a.views_count || 0))
-      .slice(0, 5)
-      .map((video) => ({
-        title:
-          video.title && video.title.length > 30
-            ? `${video.title.substring(0, 30)}...`
-            : video.title || 'Sin título',
-        vistas: Number(video.views_count || 0)
-      }));
-  }, [videos]);
-
-  const contentTotals = [
-    { tipo: 'Usuarios', total: totalUsers },
-    { tipo: 'Videos', total: totalVideos },
-    { tipo: 'Comentarios', total: totalComments },
-    { tipo: 'Audios', total: totalAudios }
-  ];
-
-  const engagementTotals = [
-    { tipo: 'Vistas', total: totalVideoViews },
-    { tipo: 'Likes', total: totalVideoLikes },
-    { tipo: 'Comentarios', total: totalComments },
-    { tipo: 'Audios Activos', total: totalActiveAudios }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="container mx-auto px-6 py-12">
@@ -200,7 +234,9 @@ export default function AppStats() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-300 text-sm">Usuarios Registrados</p>
-                  <p className="text-3xl font-bold text-white">{totalUsers.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">
+                    {metrics.totalUsers.toLocaleString()}
+                  </p>
                   <p className="text-blue-200 text-xs mt-1">Perfiles en Supabase</p>
                 </div>
                 <Users className="w-12 h-12 text-blue-400" />
@@ -213,9 +249,11 @@ export default function AppStats() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-300 text-sm">Videos</p>
-                  <p className="text-3xl font-bold text-white">{totalVideos.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">
+                    {metrics.totalVideos.toLocaleString()}
+                  </p>
                   <p className="text-purple-200 text-xs mt-1">
-                    {totalVideoViews.toLocaleString()} vistas totales
+                    {metrics.totalVideoViews.toLocaleString()} vistas totales
                   </p>
                 </div>
                 <Video className="w-12 h-12 text-purple-400" />
@@ -228,7 +266,9 @@ export default function AppStats() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-300 text-sm">Comentarios</p>
-                  <p className="text-3xl font-bold text-white">{totalComments.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">
+                    {metrics.totalComments.toLocaleString()}
+                  </p>
                   <p className="text-green-200 text-xs mt-1">Tabla comments</p>
                 </div>
                 <MessageCircle className="w-12 h-12 text-green-400" />
@@ -241,9 +281,11 @@ export default function AppStats() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-yellow-300 text-sm">Audios</p>
-                  <p className="text-3xl font-bold text-white">{totalAudios.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">
+                    {metrics.totalAudios.toLocaleString()}
+                  </p>
                   <p className="text-yellow-200 text-xs mt-1">
-                    {totalActiveAudios.toLocaleString()} activos
+                    {metrics.totalActiveAudios.toLocaleString()} activos
                   </p>
                 </div>
                 <Music className="w-12 h-12 text-yellow-400" />
@@ -270,7 +312,7 @@ export default function AppStats() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={contentTotals}>
+                    <BarChart data={metrics.contentTotals}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="tipo" stroke="#9CA3AF" />
                       <YAxis stroke="#9CA3AF" />
@@ -296,7 +338,7 @@ export default function AppStats() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={engagementTotals}>
+                    <BarChart data={metrics.engagementTotals}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="tipo" stroke="#9CA3AF" />
                       <YAxis stroke="#9CA3AF" />
@@ -326,7 +368,7 @@ export default function AppStats() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={topVideos} layout="vertical">
+                    <BarChart data={metrics.topVideos} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis type="number" stroke="#9CA3AF" />
                       <YAxis
@@ -357,7 +399,7 @@ export default function AppStats() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={videosByReligion}>
+                    <BarChart data={metrics.videosByReligion}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="name" stroke="#9CA3AF" />
                       <YAxis stroke="#9CA3AF" />
@@ -389,7 +431,7 @@ export default function AppStats() {
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={usersByRole}
+                        data={metrics.usersByRole}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -399,7 +441,7 @@ export default function AppStats() {
                         outerRadius={100}
                         dataKey="value"
                       >
-                        {usersByRole.map((entry, index) => (
+                        {metrics.usersByRole.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -422,25 +464,33 @@ export default function AppStats() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
                       <span className="text-gray-300">Usuarios registrados</span>
-                      <span className="text-2xl font-bold text-white">{totalUsers}</span>
+                      <span className="text-2xl font-bold text-white">
+                        {metrics.totalUsers}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
                       <span className="text-gray-300">Likes totales en videos</span>
-                      <span className="text-2xl font-bold text-white">{totalVideoLikes}</span>
+                      <span className="text-2xl font-bold text-white">
+                        {metrics.totalVideoLikes}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
                       <span className="text-gray-300">Promedio vistas por video</span>
                       <span className="text-2xl font-bold text-white">
-                        {totalVideos > 0 ? (totalVideoViews / totalVideos).toFixed(1) : 0}
+                        {metrics.totalVideos > 0
+                          ? (metrics.totalVideoViews / metrics.totalVideos).toFixed(1)
+                          : 0}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
                       <span className="text-gray-300">Promedio comentarios por video</span>
                       <span className="text-2xl font-bold text-white">
-                        {totalVideos > 0 ? (totalComments / totalVideos).toFixed(1) : 0}
+                        {metrics.totalVideos > 0
+                          ? (metrics.totalComments / metrics.totalVideos).toFixed(1)
+                          : 0}
                       </span>
                     </div>
                   </div>
