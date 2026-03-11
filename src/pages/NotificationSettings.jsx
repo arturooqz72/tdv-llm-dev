@@ -52,7 +52,6 @@ function loadPreferences(email) {
 
 function savePreferences(email, prefs) {
   if (!email) return;
-
   localStorage.setItem(getStorageKey(email), JSON.stringify(prefs));
 }
 
@@ -78,7 +77,6 @@ export default function NotificationSettings() {
     };
 
     setPreferences(updated);
-
     savePreferences(currentUser.email, updated);
 
     setSaved(true);
@@ -92,42 +90,48 @@ export default function NotificationSettings() {
         icon: Video,
         title: "Nuevos Videos",
         description: "Recibe notificaciones cuando haya nuevos videos disponibles.",
-        color: "text-purple-500",
+        iconClass: "text-violet-600",
+        iconBg: "bg-violet-100",
       },
       {
         key: "live_streams",
         icon: Radio,
         title: "Transmisiones en Vivo",
         description: "Alerta cuando inicie una transmisión en vivo.",
-        color: "text-red-500",
+        iconClass: "text-rose-600",
+        iconBg: "bg-rose-100",
       },
       {
         key: "new_comments",
         icon: MessageCircle,
         title: "Nuevos Comentarios",
         description: "Notifica cuando alguien comente en tus contenidos.",
-        color: "text-blue-500",
+        iconClass: "text-blue-600",
+        iconBg: "bg-blue-100",
       },
       {
         key: "new_messages",
         icon: MessageCircle,
         title: "Mensajes Directos",
         description: "Recibe alertas de nuevos mensajes en el chat.",
-        color: "text-green-500",
+        iconClass: "text-emerald-600",
+        iconBg: "bg-emerald-100",
       },
       {
         key: "upcoming_birthdays",
         icon: Cake,
         title: "Cumpleaños",
         description: "Recordatorios de cumpleaños de miembros de la comunidad.",
-        color: "text-yellow-500",
+        iconClass: "text-amber-600",
+        iconBg: "bg-amber-100",
       },
       {
         key: "new_chat_rooms",
         icon: Hash,
         title: "Nuevas Salas de Chat",
         description: "Recibe notificaciones cuando se cree una nueva sala de chat.",
-        color: "text-cyan-500",
+        iconClass: "text-cyan-600",
+        iconBg: "bg-cyan-100",
       },
       ...(currentUser?.role === "admin"
         ? [
@@ -136,7 +140,8 @@ export default function NotificationSettings() {
               icon: Users,
               title: "Nuevos Usuarios (Admin)",
               description: "Alerta cuando un nuevo usuario se registre en la app.",
-              color: "text-orange-500",
+              iconClass: "text-orange-600",
+              iconBg: "bg-orange-100",
             },
           ]
         : []),
@@ -146,35 +151,34 @@ export default function NotificationSettings() {
 
   if (isLoadingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
       </div>
     );
   }
 
   return (
     <PermissionGuard>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-12 px-6">
+      <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 py-12 px-6">
         <div className="max-w-4xl mx-auto">
-
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-400 flex items-center justify-center">
-              <Bell className="w-7 h-7 text-black" />
+            <div className="w-14 h-14 rounded-2xl bg-sky-100 border border-sky-200 flex items-center justify-center shadow-sm">
+              <Bell className="w-7 h-7 text-sky-600" />
             </div>
 
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-gray-900">
                 Preferencias de Notificaciones
               </h1>
 
-              <p className="text-gray-400">
+              <p className="text-gray-600">
                 Personaliza cómo y cuándo recibir notificaciones
               </p>
             </div>
           </div>
 
           {saved && (
-            <div className="mb-6 p-4 bg-green-500/20 border border-green-500 rounded-xl flex items-center gap-3 text-green-400">
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-700 shadow-sm">
               <CheckCircle2 className="w-5 h-5" />
               <span>Preferencias guardadas correctamente</span>
             </div>
@@ -185,25 +189,25 @@ export default function NotificationSettings() {
               const Icon = option.icon;
 
               return (
-                <Card key={option.key} className="bg-gray-800 border-gray-700">
+                <Card
+                  key={option.key}
+                  className="bg-white border border-sky-100 shadow-sm rounded-2xl"
+                >
                   <CardContent className="p-6">
-
                     <div className="flex items-start justify-between gap-4">
-
                       <div className="flex items-start gap-4 flex-1">
-
                         <div
-                          className={`w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center ${option.color}`}
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${option.iconBg}`}
                         >
-                          <Icon className="w-6 h-6" />
+                          <Icon className={`w-6 h-6 ${option.iconClass}`} />
                         </div>
 
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-white mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
                             {option.title}
                           </h3>
 
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-gray-600">
                             {option.description}
                           </p>
                         </div>
@@ -216,9 +220,7 @@ export default function NotificationSettings() {
                         }
                         className="mt-1"
                       />
-
                     </div>
-
                   </CardContent>
                 </Card>
               );
@@ -229,29 +231,24 @@ export default function NotificationSettings() {
             <PushNotificationManager currentUser={currentUser} />
           </div>
 
-          <Card className="mt-8 bg-gradient-to-r from-cyan-500/10 to-cyan-400/10 border-cyan-500">
+          <Card className="mt-8 bg-gradient-to-r from-sky-50 to-cyan-50 border border-sky-200 rounded-2xl shadow-sm">
             <CardContent className="p-6">
-
               <div className="flex items-start gap-3">
-
-                <Sparkles className="w-5 h-5 text-cyan-400 mt-0.5" />
+                <Sparkles className="w-5 h-5 text-sky-600 mt-0.5" />
 
                 <div>
-                  <h4 className="text-white font-semibold mb-1">
+                  <h4 className="text-gray-900 font-semibold mb-1">
                     Notificaciones en Tiempo Real
                   </h4>
 
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     Las preferencias de esta pantalla ya no dependen de Base44.
                     Más adelante se pueden sincronizar directamente con Supabase.
                   </p>
                 </div>
-
               </div>
-
             </CardContent>
           </Card>
-
         </div>
       </div>
     </PermissionGuard>
