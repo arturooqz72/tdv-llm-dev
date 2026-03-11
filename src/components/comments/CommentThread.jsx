@@ -1,95 +1,118 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageCircle, Send, Heart, Flag } from 'lucide-react';
+import { MessageCircle, Send, Heart } from 'lucide-react';
 import ReportButton from '@/components/ReportButton';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function CommentThread({ 
-  comment, 
-  currentUser, 
+export default function CommentThread({
+  comment,
+  currentUser,
   videoId,
   videoOwnerId,
   onCommentAdded,
-  level = 0 
+  level = 0
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState([]);
   const [showReplies, setShowReplies] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [submittingReply, setSubmittingReply] = useState(false);
+
+  const createdDate = comment.created_at || comment.created_date;
 
   const loadReplies = async () => {
     if (!showReplies) {
-      const repliesData = await base44.entities.Comment.filter({ 
-        parent_comment_id: comment.id 
-      }, '-created_date');
-      setReplies(repliesData);
+      setLoadingReplies(true);
+      try {
+        const { data, error } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('parent_comment_id', comment.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setReplies(data || []);
+      } catch (error) {
+        console.error('Error cargando respuestas:', error);
+      } finally {
+        setLoadingReplies(false);
+      }
     }
+
     setShowReplies(!showReplies);
   };
 
   const handleSubmitReply = async (e) => {
     e.preventDefault();
-    if (!replyText.trim() || !currentUser) return;
+    if (!replyText.trim() || !currentUser || submittingReply) return;
 
-    const newReply = await base44.entities.Comment.create({
-      video_id: videoId,
-      user_email: currentUser.email,
-      user_name: currentUser.full_name || currentUser.email.split('@')[0],
-      content: replyText,
-      parent_comment_id: comment.id
-    });
+    setSubmittingReply(true);
 
-    // Increment replies count
-    await base44.entities.Comment.update(comment.id, {
-      replies_count: (comment.replies_count || 0) + 1
-    });
+    try {
+      const payload = {
+        video_id: videoId,
+        user_email: currentUser.email,
+        user_name: currentUser.name || currentUser.email.split('@')[0],
+        content: replyText.trim(),
+        parent_comment_id: comment.id,
+        likes_count: 0,
+        replies_count: 0,
+      };
 
-    // Notify the comment owner about the reply
-    if (comment.user_email !== currentUser.email) {
-      await base44.entities.Notification.create({
-        user_email: comment.user_email,
-        type: 'comment_reply',
-        message: `${currentUser.full_name || currentUser.email.split('@')[0]} respondió a tu comentario`,
-        related_id: videoId,
-        from_user: currentUser.email,
-        from_user_name: currentUser.full_name || currentUser.email.split('@')[0]
-      });
-    }
+      const { data: newReply, error: createError } = await supabase
+        .from('comments')
+        .insert([payload])
+        .select()
+        .single();
 
-    // Also notify video owner if different from reply author and comment author
-    if (videoOwnerId !== currentUser.email && videoOwnerId !== comment.user_email) {
-      await base44.entities.Notification.create({
-        user_email: videoOwnerId,
-        type: 'new_comment',
-        message: `${currentUser.full_name || currentUser.email.split('@')[0]} comentó en tu video`,
-        related_id: videoId,
-        from_user: currentUser.email,
-        from_user_name: currentUser.full_name || currentUser.email.split('@')[0]
-      });
-    }
+      if (createError) throw createError;
 
-    setReplyText('');
-    setShowReplyForm(false);
-    setReplies([newReply, ...replies]);
-    setShowReplies(true);
-    
-    if (onCommentAdded) {
-      onCommentAdded();
+      const { error: updateError } = await supabase
+        .from('comments')
+        .update({
+          replies_count: (comment.replies_count || 0) + 1,
+        })
+        .eq('id', comment.id);
+
+      if (updateError) throw updateError;
+
+      setReplyText('');
+      setShowReplyForm(false);
+      setReplies([newReply, ...replies]);
+      setShowReplies(true);
+
+      if (onCommentAdded) {
+        onCommentAdded();
+      }
+    } catch (error) {
+      console.error('Error al responder comentario:', error);
+    } finally {
+      setSubmittingReply(false);
     }
   };
 
   const handleLikeComment = async () => {
-    if (!currentUser) return;
-    
-    if (!liked) {
-      await base44.entities.Comment.update(comment.id, {
-        likes_count: (comment.likes_count || 0) + 1
-      });
+    if (!currentUser || liked) return;
+
+    try {
+      const nextLikes = (comment.likes_count || 0) + 1;
+
+      const { error } = await supabase
+        .from('comments')
+        .update({ likes_count: nextLikes })
+        .eq('id', comment.id);
+
+      if (error) throw error;
+
       setLiked(true);
+      comment.likes_count = nextLikes;
+    } catch (error) {
+      console.error('Error al dar like al comentario:', error);
     }
   };
 
@@ -100,6 +123,7 @@ export default function CommentThread({
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
             {comment.user_name?.charAt(0).toUpperCase()}
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
@@ -107,15 +131,21 @@ export default function CommentThread({
                   <p className="font-semibold text-sm text-gray-900">
                     {comment.user_name}
                   </p>
+
                   <span className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(comment.created_date), { addSuffix: true, locale: es })}
+                    {createdDate
+                      ? formatDistanceToNow(new Date(createdDate), {
+                          addSuffix: true,
+                          locale: es,
+                        })
+                      : ''}
                   </span>
                 </div>
+
                 <p className="text-sm text-gray-700 mt-1 break-words">
                   {comment.content}
                 </p>
-                
-                {/* Actions */}
+
                 <div className="flex items-center gap-4 mt-2">
                   <button
                     onClick={handleLikeComment}
@@ -124,11 +154,11 @@ export default function CommentThread({
                     } transition-colors`}
                   >
                     <Heart className={`w-3 h-3 ${liked ? 'fill-current' : ''}`} />
-                    {comment.likes_count > 0 && (
+                    {(comment.likes_count || 0) > 0 && (
                       <span>{comment.likes_count}</span>
                     )}
                   </button>
-                  
+
                   {currentUser && level < 2 && (
                     <button
                       onClick={() => setShowReplyForm(!showReplyForm)}
@@ -138,18 +168,22 @@ export default function CommentThread({
                       Responder
                     </button>
                   )}
-                  
-                  {comment.replies_count > 0 && (
+
+                  {(comment.replies_count || 0) > 0 && (
                     <button
                       onClick={loadReplies}
                       className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
                     >
-                      {showReplies ? 'Ocultar' : 'Ver'} {comment.replies_count} {comment.replies_count === 1 ? 'respuesta' : 'respuestas'}
+                      {loadingReplies
+                        ? 'Cargando...'
+                        : `${showReplies ? 'Ocultar' : 'Ver'} ${comment.replies_count} ${
+                            comment.replies_count === 1 ? 'respuesta' : 'respuestas'
+                          }`}
                     </button>
                   )}
                 </div>
               </div>
-              
+
               {currentUser && currentUser.email !== comment.user_email && (
                 <ReportButton
                   contentType="comment"
@@ -164,7 +198,6 @@ export default function CommentThread({
           </div>
         </div>
 
-        {/* Reply Form */}
         {showReplyForm && currentUser && (
           <div className="mt-3 ml-11">
             <form onSubmit={handleSubmitReply} className="space-y-2">
@@ -175,16 +208,18 @@ export default function CommentThread({
                 className="resize-none text-sm"
                 rows={2}
               />
+
               <div className="flex gap-2">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   size="sm"
                   className="bg-gradient-to-r from-purple-600 to-pink-600"
-                  disabled={!replyText.trim()}
+                  disabled={!replyText.trim() || submittingReply}
                 >
                   <Send className="w-3 h-3 mr-1" />
-                  Responder
+                  {submittingReply ? 'Enviando...' : 'Responder'}
                 </Button>
+
                 <Button
                   type="button"
                   size="sm"
@@ -198,10 +233,9 @@ export default function CommentThread({
           </div>
         )}
 
-        {/* Replies */}
         {showReplies && replies.length > 0 && (
           <div className="mt-3">
-            {replies.map(reply => (
+            {replies.map((reply) => (
               <CommentThread
                 key={reply.id}
                 comment={reply}
