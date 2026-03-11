@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Copy, Check, Share2 } from "lucide-react";
+import { Copy, Check, Share2, Sparkles } from "lucide-react";
 
 function ShareButtons({ page, title }) {
   const [copied, setCopied] = useState(false);
@@ -30,15 +30,28 @@ function ShareButtons({ page, title }) {
   return (
     <div className="flex items-center gap-2 mt-3">
       <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(); }}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 text-gray-200 hover:bg-cyan-600 hover:text-white transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCopy();
+        }}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-cyan-200 text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors shadow-sm"
       >
-        {copied ? <Check className="w-3 h-3 text-green-300" /> : <Copy className="w-3 h-3" />}
+        {copied ? (
+          <Check className="w-3 h-3 text-emerald-500" />
+        ) : (
+          <Copy className="w-3 h-3" />
+        )}
         {copied ? "¡Copiado!" : "Copiar link"}
       </button>
+
       <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleShare(); }}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700 text-gray-200 hover:bg-cyan-600 hover:text-white transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleShare();
+        }}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-cyan-200 text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors shadow-sm"
       >
         <Share2 className="w-3 h-3" />
         Compartir
@@ -47,97 +60,141 @@ function ShareButtons({ page, title }) {
   );
 }
 
+function GameCard({
+  title,
+  description,
+  page,
+  buttonText = "Jugar",
+  accent = "cyan",
+}) {
+  const accentStyles = {
+    cyan: {
+      cardBorder: "border-cyan-200",
+      badgeBg: "bg-cyan-50",
+      badgeText: "text-cyan-700",
+      titleText: "text-slate-900",
+      button:
+        "bg-cyan-500 hover:bg-cyan-400 text-white",
+    },
+    red: {
+      cardBorder: "border-rose-200",
+      badgeBg: "bg-rose-50",
+      badgeText: "text-rose-700",
+      titleText: "text-rose-700",
+      button:
+        "bg-rose-500 hover:bg-rose-400 text-white",
+    },
+    green: {
+      cardBorder: "border-emerald-200",
+      badgeBg: "bg-emerald-50",
+      badgeText: "text-emerald-700",
+      titleText: "text-emerald-700",
+      button:
+        "bg-emerald-500 hover:bg-emerald-400 text-white",
+    },
+  };
+
+  const styles = accentStyles[accent] || accentStyles.cyan;
+
+  return (
+    <Card
+      className={`p-6 rounded-3xl border ${styles.cardBorder} bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300`}
+    >
+      <div
+        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold mb-4 ${styles.badgeBg} ${styles.badgeText}`}
+      >
+        <Sparkles className="w-3 h-3" />
+        Juego bíblico
+      </div>
+
+      <h2 className={`text-xl font-bold mb-3 ${styles.titleText}`}>{title}</h2>
+
+      <p className="text-slate-600 mb-4 leading-relaxed">{description}</p>
+
+      <Link to={createPageUrl(page)}>
+        <Button className={`w-full rounded-xl font-semibold shadow-sm ${styles.button}`}>
+          {buttonText}
+        </Button>
+      </Link>
+
+      <ShareButtons page={page} title={title} />
+    </Card>
+  );
+}
+
 export default function Explore() {
   return (
-    <div className="min-h-screen py-12 px-4 flex justify-center">
-      <div className="max-w-3xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-[#e9f9ff] via-[#f5fcff] to-[#ffffff] py-12 px-4 flex justify-center">
+      <div className="max-w-5xl w-full">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-4 py-1.5 text-sm text-cyan-700 shadow-sm mb-4">
+            <Sparkles className="w-4 h-4" />
+            Diversión · Biblia · Comunidad
+          </div>
 
-        <h1 className="text-4xl font-bold text-center mb-10 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-          Juegos Disponibles
-        </h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
+            Juegos <span className="text-cyan-700">Disponibles</span>
+          </h1>
+
+          <p className="mt-3 text-slate-600 text-base md:text-lg max-w-2xl mx-auto">
+            Explora juegos bíblicos para aprender, compartir y convivir con la
+            comunidad de Team Desvelados LLDM.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <GameCard
+            title="Memorama Bíblico"
+            description="Encuentra las parejas de versículos."
+            page="Memorama"
+          />
 
-          {/* Memorama */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">Memorama Bíblico</h2>
-            <p className="text-gray-400 mb-4">Encuentra las parejas de versículos.</p>
-            <Link to={createPageUrl("Memorama")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Jugar</Button>
-            </Link>
-            <ShareButtons page="Memorama" title="Memorama Bíblico" />
-          </Card>
+          <GameCard
+            title="Trivia Bíblica"
+            description="Responde preguntas de conocimiento bíblico."
+            page="TriviaBiblica"
+          />
 
-          {/* Trivia Bíblica */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">Trivia Bíblica</h2>
-            <p className="text-gray-400 mb-4">Responde preguntas de conocimiento bíblico.</p>
-            <Link to={createPageUrl("TriviaBiblica")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Jugar</Button>
-            </Link>
-            <ShareButtons page="TriviaBiblica" title="Trivia Bíblica" />
-          </Card>
+          <GameCard
+            title="Adivina la Palabra"
+            description="Completa la palabra bíblica correcta."
+            page="AdivinaLaPalabra"
+          />
 
-          {/* Adivina la Palabra */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">Adivina la Palabra</h2>
-            <p className="text-gray-400 mb-4">Completa la palabra bíblica correcta.</p>
-            <Link to={createPageUrl("AdivinaLaPalabra")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Jugar</Button>
-            </Link>
-            <ShareButtons page="AdivinaLaPalabra" title="Adivina la Palabra" />
-          </Card>
+          <GameCard
+            title="Ahorcado Bíblico"
+            description="Adivina la palabra antes de perder."
+            page="Ahorcado"
+          />
 
-          {/* Ahorcado */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">Ahorcado Bíblico</h2>
-            <p className="text-gray-400 mb-4">Adivina la palabra antes de perder.</p>
-            <Link to={createPageUrl("Ahorcado")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Jugar</Button>
-            </Link>
-            <ShareButtons page="Ahorcado" title="Ahorcado Bíblico" />
-          </Card>
+          <GameCard
+            title="¿Quién lo dijo?"
+            description="Adivina quién dijo la frase bíblica."
+            page="QuienLoDijo"
+          />
 
-          {/* ¿Quién lo dijo? */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">¿Quién lo dijo?</h2>
-            <p className="text-gray-400 mb-4">Adivina quién dijo la frase bíblica.</p>
-            <Link to={createPageUrl("QuienLoDijo")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Jugar</Button>
-            </Link>
-            <ShareButtons page="QuienLoDijo" title="¿Quién lo dijo?" />
-          </Card>
+          <GameCard
+            title="Adivina el Versículo"
+            description="Completa la palabra faltante."
+            page="AdivinaVersiculo"
+            buttonText="Entrar"
+          />
 
-          {/* Adivina el Versículo — Modo Normal */}
-          <Card className="p-6 bg-[#0f172a] border border-blue-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">Adivina el Versículo</h2>
-            <p className="text-gray-400 mb-4">Completa la palabra faltante.</p>
-            <Link to={createPageUrl("AdivinaVersiculo")}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Entrar</Button>
-            </Link>
-            <ShareButtons page="AdivinaVersiculo" title="Adivina el Versículo" />
-          </Card>
+          <GameCard
+            title="Adivina el Versículo — Difícil"
+            description="Versículos más largos y menos tiempo."
+            page="AdivinaVersiculoDificil"
+            buttonText="Jugar Modo Difícil"
+            accent="red"
+          />
 
-          {/* Adivina el Versículo — Modo Difícil */}
-          <Card className="p-6 bg-[#0f172a] border border-red-900/40">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">Adivina el Versículo — Difícil</h2>
-            <p className="text-gray-400 mb-4">Versículos más largos y menos tiempo.</p>
-            <Link to={createPageUrl("AdivinaVersiculoDificil")}>
-              <Button className="w-full bg-red-600 hover:bg-red-700 text-white">Jugar Modo Difícil</Button>
-            </Link>
-            <ShareButtons page="AdivinaVersiculoDificil" title="Adivina el Versículo — Difícil" />
-          </Card>
-
-          {/* Ranking */}
-          <Card className="p-6 bg-[#0f172a] border border-green-900/40">
-            <h2 className="text-xl font-semibold text-green-400 mb-3">Ranking General</h2>
-            <p className="text-gray-400 mb-4">Consulta los puntajes más altos.</p>
-            <Link to={createPageUrl("RankingJuegos")}>
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">Ver Ranking</Button>
-            </Link>
-            <ShareButtons page="RankingJuegos" title="Ranking General" />
-          </Card>
-
+          <GameCard
+            title="Ranking General"
+            description="Consulta los puntajes más altos."
+            page="RankingJuegos"
+            buttonText="Ver Ranking"
+            accent="green"
+          />
         </div>
       </div>
     </div>
