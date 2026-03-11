@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 import VideoCard from "@/components/video/VideoCard";
 import ShareButton from "@/components/ShareButton";
@@ -42,7 +42,6 @@ const STREAMS = [
 
 export default function Home() {
   const { user: currentUser, isAuthenticated } = useAuth();
-  const [filter] = useState("all");
 
   const safeUser = isAuthenticated ? currentUser : null;
 
@@ -51,65 +50,18 @@ export default function Home() {
   const [isRadioPlaying, setIsRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.7);
 
-  const { data: allPrograms = [] } = useQuery({
-    queryKey: ["radio-programs-home"],
-    queryFn: async () => {
-      try {
-        return await base44.entities.RadioProgram.filter(
-          { is_active: true },
-          "-created_date",
-          100
-        );
-      } catch (error) {
-        console.error("Error cargando programas de radio:", error);
-        return [];
-      }
-    },
-    staleTime: 3600000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-  });
-
   const { data: videos = [], isLoading, refetch } = useQuery({
-    queryKey: ["videos", filter, safeUser?.email || "guest"],
-    enabled: filter !== "following" || !!safeUser,
+    queryKey: ["videos-home"],
     queryFn: async () => {
       try {
-        if (filter === "all") {
-          return await base44.entities.Video.list("-created_date", 100);
-        }
+        const { data, error } = await supabase
+          .from("videos")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
 
-        if (
-          filter === "lldm" ||
-          filter === "cristianismo" ||
-          filter === "otros"
-        ) {
-          return await base44.entities.Video.filter(
-            { religion: filter },
-            "-created_date",
-            100
-          );
-        }
-
-        if (filter === "following" && safeUser?.email) {
-          const follows = await base44.entities.Follow.filter({
-            follower_email: safeUser.email,
-          });
-
-          const followingEmails = follows.map((f) => f.following_email);
-
-          const allVideos = await base44.entities.Video.list(
-            "-created_date",
-            100
-          );
-
-          return allVideos.filter((video) =>
-            followingEmails.includes(video.created_by)
-          );
-        }
-
-        return [];
+        if (error) throw error;
+        return data || [];
       } catch (error) {
         console.error("Error cargando videos:", error);
         return [];
@@ -210,7 +162,6 @@ export default function Home() {
         onError={handleRadioError}
       />
 
-      {/* HERO NUEVO */}
       <section className="w-full px-4 md:px-6 lg:px-8 pt-6 md:pt-10 pb-6 md:pb-10">
         <div className="w-full max-w-[1600px] mx-auto">
           <div className="relative overflow-hidden rounded-3xl border border-cyan-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,250,255,0.98),rgba(233,249,255,1))] shadow-xl">
@@ -275,7 +226,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* RADIO + BIENVENIDA */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
         <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
           <Card className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.12),transparent_26%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(241,249,255,0.98),rgba(234,246,255,1))] border-cyan-200 text-slate-800 rounded-3xl shadow-xl">
@@ -427,14 +377,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STREAMS DESTACADOS */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
         <div className="w-full max-w-[1600px] mx-auto">
           <FeaturedStreams />
         </div>
       </section>
 
-      {/* LLDMPLAY */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
         <div className="w-full max-w-[1600px] mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
@@ -563,13 +511,6 @@ export default function Home() {
 
                 <CardContent className="space-y-3 text-sm text-slate-600">
                   <div className="flex items-center justify-between rounded-2xl bg-cyan-50 px-4 py-3 border border-cyan-100">
-                    <span>Programas activos</span>
-                    <span className="font-bold text-cyan-700">
-                      {allPrograms.length}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-2xl bg-cyan-50 px-4 py-3 border border-cyan-100">
                     <span>Videos cargados</span>
                     <span className="font-bold text-cyan-700">
                       {videos.length}
@@ -591,7 +532,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* VIDEOS */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-24 md:pb-10">
         <div className="w-full max-w-[1600px] mx-auto">
           <div className="flex items-center justify-between gap-4 mb-5 md:mb-6">
