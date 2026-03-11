@@ -33,6 +33,8 @@ import {
 const RADIO_BASE = "https://radio.team-desveladoslldm.com";
 const STATION = "tdv_lldm-christian_radio";
 const RADIO_PAGE_URL = "http://radio24-7.team-desveladoslldm.com/";
+const HERO_IMAGE =
+  "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/66c9f4923_banner.jpg";
 
 const STREAMS = [
   `${RADIO_BASE}/listen/${STATION}/radio.mp3`,
@@ -209,42 +211,64 @@ export default function Home() {
         onError={handleRadioError}
       />
 
-      {/* HERO */}
+      {/* HERO NUEVO */}
       <section className="w-full px-4 md:px-6 lg:px-8 pt-6 md:pt-10 pb-6 md:pb-10">
         <div className="w-full max-w-[1600px] mx-auto">
-          <div className="rounded-3xl overflow-hidden border border-cyan-200 bg-white/85 shadow-xl">
-            <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/66c9f4923_banner.jpg"
-              alt="Team Desvelados LLDM"
-              className="w-full h-auto max-h-[520px] object-cover"
-            />
+          <div className="relative overflow-hidden rounded-3xl border border-cyan-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,250,255,0.98),rgba(233,249,255,1))] shadow-xl">
+            <div className="absolute -top-20 -left-20 h-56 w-56 rounded-full bg-cyan-200/40 blur-3xl" />
+            <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-sky-200/40 blur-3xl" />
 
-            <div className="px-4 md:px-8 py-5 md:py-8 text-center bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(239,250,255,0.95))]">
-              <p className="text-cyan-700 text-base md:text-2xl font-bold mb-4 md:mb-6">
-                Celebrando 100 años de esperanza, fe y salvación LLDM
-              </p>
+            <div className="relative grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6 p-5 md:p-8 lg:p-10 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-1 text-sm text-cyan-700 shadow-sm mb-4">
+                  <Sparkles className="w-4 h-4" />
+                  Comunidad · Radio · Videos · LLDMPlay
+                </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <ShareButton />
+                <h1 className="text-3xl md:text-5xl xl:text-6xl font-black tracking-tight text-slate-900 leading-tight">
+                  Team Desvelados
+                  <span className="block text-cyan-700">LLDM</span>
+                </h1>
 
-                <Link to={createPageUrl("Videos")}>
-                  <Button
-                    variant="outline"
-                    className="border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800 rounded-xl font-semibold shadow-sm"
-                  >
-                    <Video className="w-4 h-4 mr-2" />
-                    Ver Videos
-                  </Button>
-                </Link>
+                <p className="mt-4 text-slate-600 text-sm md:text-lg leading-relaxed max-w-2xl">
+                  Un espacio moderno para disfrutar radio 24/7, videos,
+                  contenido espiritual, concursos y convivencia con la comunidad.
+                </p>
 
-                <Link to={createPageUrl("MyAudios")}>
-                  <Button
-                    className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl font-bold shadow-sm"
-                  >
-                    <Disc3 className="w-4 h-4 mr-2" />
-                    LLDMPlay
-                  </Button>
-                </Link>
+                <p className="mt-4 text-cyan-700 text-base md:text-2xl font-bold">
+                  Celebrando 100 años de esperanza, fe y salvación LLDM
+                </p>
+
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <ShareButton />
+
+                  <Link to={createPageUrl("Videos")}>
+                    <Button
+                      variant="outline"
+                      className="border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800 rounded-xl font-semibold shadow-sm"
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Ver Videos
+                    </Button>
+                  </Link>
+
+                  <Link to={createPageUrl("MyAudios")}>
+                    <Button className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl font-bold shadow-sm">
+                      <Disc3 className="w-4 h-4 mr-2" />
+                      LLDMPlay
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="rounded-[28px] border border-cyan-200 bg-white/75 p-3 md:p-4 shadow-lg">
+                  <img
+                    src={HERO_IMAGE}
+                    alt="Team Desvelados LLDM"
+                    className="w-full rounded-[22px] object-cover"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -254,7 +278,6 @@ export default function Home() {
       {/* RADIO + BIENVENIDA */}
       <section className="w-full px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
         <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-          {/* RADIO CUSTOM */}
           <Card className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.12),transparent_26%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(241,249,255,0.98),rgba(234,246,255,1))] border-cyan-200 text-slate-800 rounded-3xl shadow-xl">
             <div className="absolute -top-16 -left-16 h-40 w-40 rounded-full bg-cyan-300/20 blur-3xl" />
             <div className="absolute -bottom-16 -right-16 h-40 w-40 rounded-full bg-blue-300/20 blur-3xl" />
@@ -360,7 +383,6 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {/* BIENVENIDA */}
           <Card className="bg-white/85 border-cyan-200 text-slate-800 rounded-3xl shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-cyan-700">
