@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BookOpen, Trophy, RotateCcw, ArrowLeft } from 'lucide-react';
+import { BookOpen, Trophy, RotateCcw } from 'lucide-react';
 import GameShareButtons from '@/components/games/GameShareButtons';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -595,7 +595,7 @@ const preguntasTrivia = [
   respuestaCorrecta: 3
 },
 {
-  pregunta: "¿Quién pidió un corazón entendido?",
+  pregunta: "¿Quién pidió sabiduría para gobernar?",
   opciones: ["Saúl", "David", "Josías", "Salomón"],
   respuestaCorrecta: 3
 },
@@ -740,7 +740,7 @@ const preguntasTrivia = [
   respuestaCorrecta: 3
 },
 {
-  pregunta: "¿Qué mujer fue conocida por su oración silenciosa?",
+  pregunta: "¿Qué mujer oró en silencio?",
   opciones: ["Sara", "Rebeca", "Elisabet", "Ana"],
   respuestaCorrecta: 3
 },
@@ -928,301 +928,6 @@ const preguntasTrivia = [
   pregunta: "¿Quién vio la escritura en la pared?",
   opciones: ["Ciro", "Darío", "Artajerjes", "Belsasar"],
   respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue esposa de Isaac?",
-  opciones: ["Sara", "Lea", "Raquel", "Rebeca"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién soñó con el sol, la luna y las estrellas?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un trono alto y sublime?",
-  opciones: ["Jeremías", "Ezequiel", "Daniel", "Isaías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién casi fue sacrificado?",
-  opciones: ["Ismael", "Esaú", "Jacob", "Isaac"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer acompañó a Noemí?",
-  opciones: ["Sara", "Ana", "Rebeca", "Rut"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio un árbol grande que llegaba al cielo?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Nabucodonosor"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el padre de Moisés?",
-  opciones: ["Natán", "Elcana", "Taré", "Amram"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer cuidó al bebé Moisés?",
-  opciones: ["Sara", "Lea", "Raquel", "La hija de Faraón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hermano menor de Moisés?",
-  opciones: ["Natán", "Samuel", "Josué", "Aarón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un trono alto y sublime?",
-  opciones: ["Jeremías", "Ezequiel", "Daniel", "Isaías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién pidió un corazón entendido para gobernar?",
-  opciones: ["Saúl", "David", "Josías", "Salomón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hijo de Abraham que nació conforme a la promesa?",
-  opciones: ["Esaú", "Jacob", "Ismael", "Isaac"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un altar con brasas encendidas?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién soñó con un árbol grande que llegaba al cielo?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Nabucodonosor"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue valiente al presentarse ante el rey?",
-  opciones: ["Débora", "Rut", "Noemí", "Ester"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién nació en la vejez de Jacob?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un estanque con peces?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién pidió sabiduría para gobernar?",
-  opciones: ["Saúl", "David", "Josías", "Salomón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer mostró fe en Sarepta?",
-  opciones: ["Débora", "Ana", "Rebeca", "La viuda de Sarepta"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio una visión de un carnero y un macho cabrío?",
-  opciones: ["Isaías", "Jeremías", "Ezequiel", "Daniel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién tuvo sueños proféticos entre los hijos de Jacob?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un ejército reviviendo?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio la escritura en la pared?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Belsasar"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue esposa de Isaac?",
-  opciones: ["Sara", "Lea", "Raquel", "Rebeca"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién soñó con el sol, la luna y las estrellas?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un trono alto y sublime?",
-  opciones: ["Jeremías", "Ezequiel", "Daniel", "Isaías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién casi fue sacrificado por su padre?",
-  opciones: ["Ismael", "Esaú", "Jacob", "Isaac"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer acompañó a Noemí?",
-  opciones: ["Sara", "Ana", "Rebeca", "Rut"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio un árbol grande que llegaba al cielo?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Nabucodonosor"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el padre de Moisés?",
-  opciones: ["Natán", "Elcana", "Taré", "Amram"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer cuidó al bebé Moisés?",
-  opciones: ["Sara", "Lea", "Raquel", "La hija de Faraón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hermano menor de Moisés?",
-  opciones: ["Natán", "Samuel", "Josué", "Aarón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un trono alto y sublime?",
-  opciones: ["Jeremías", "Ezequiel", "Daniel", "Isaías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién pidió un corazón entendido para gobernar?",
-  opciones: ["Saúl", "David", "Josías", "Salomón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer se rió al escuchar una promesa?",
-  opciones: ["Rebeca", "Raquel", "Ana", "Sara"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién soñó con el sol, la luna y once estrellas?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un carbón encendido tocar sus labios?",
-  opciones: ["Jeremías", "Ezequiel", "Daniel", "Isaías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién tocaba el arpa para calmar a un rey?",
-  opciones: ["Salomón", "Josías", "Ezequías", "David"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue conocida por su fidelidad hacia su suegra?",
-  opciones: ["Sara", "Ana", "Rebeca", "Rut"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hijo de Adán y Eva que ofreció un sacrificio de animales?",
-  opciones: ["Set", "Enós", "Caín", "Abel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un hombre con un cordel de medir?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Zacarías"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el rey que tocaba el arpa?",
-  opciones: ["Salomón", "Josías", "Ezequías", "David"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue conocida por su belleza en Persia?",
-  opciones: ["Débora", "Rut", "Noemí", "Ester"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hijo de Jacob que tuvo dos hijos en Egipto?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio una zarza que ardía sin consumirse?",
-  opciones: ["Josué", "Samuel", "Elías", "Moisés"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién escribió muchos proverbios?",
-  opciones: ["David", "Josías", "Ezequías", "Salomón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer oró en silencio?",
-  opciones: ["Sara", "Rebeca", "Elisabet", "Ana"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién fue el hijo de Abraham que nació de Agar?",
-  opciones: ["Esaú", "Jacob", "Isaac", "Ismael"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un altar con brasas?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién soñó con un árbol grande?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Nabucodonosor"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer fue valiente ante el rey?",
-  opciones: ["Débora", "Rut", "Noemí", "Ester"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién nació en la vejez de Jacob?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un estanque con peces?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién pidió sabiduría?",
-  opciones: ["Saúl", "David", "Josías", "Salomón"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué mujer mostró fe en Sarepta?",
-  opciones: ["Débora", "Ana", "Rebeca", "La viuda de Sarepta"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio un carnero y un macho cabrío?",
-  opciones: ["Isaías", "Jeremías", "Ezequiel", "Daniel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién tuvo sueños proféticos?",
-  opciones: ["Rubén", "Leví", "Benjamín", "José"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Qué profeta vio un ejército reviviendo?",
-  opciones: ["Isaías", "Jeremías", "Daniel", "Ezequiel"],
-  respuestaCorrecta: 3
-},
-{
-  pregunta: "¿Quién vio la escritura en la pared?",
-  opciones: ["Ciro", "Darío", "Artajerjes", "Belsasar"],
-  respuestaCorrecta: 3
 }
 ];
 
@@ -1234,10 +939,8 @@ export default function TriviaBiblica() {
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
   const [mostrarResultado, setMostrarResultado] = useState(false);
   const [juegoTerminado, setJuegoTerminado] = useState(false);
-
   const [concursoActivo, setConcursoActivo] = useState(false);
 
-  // 🔥 CARGAR USUARIO
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -1250,7 +953,6 @@ export default function TriviaBiblica() {
     loadUser();
   }, []);
 
-  // 🔥 CARGAR ESTADO DEL CONCURSO
   useEffect(() => {
     const loadEstado = async () => {
       try {
@@ -1263,14 +965,12 @@ export default function TriviaBiblica() {
     loadEstado();
   }, []);
 
-  // ⭐ MEZCLAR SOLO UNA VEZ POR PREGUNTA
   useEffect(() => {
     setPreguntaMezclada(shuffleOptions(preguntasTrivia[preguntaActual]));
   }, [preguntaActual]);
 
   if (!preguntaMezclada) return null;
 
-  // 🔥 LÓGICA DEL JUEGO
   const manejarRespuesta = (indice) => {
     setRespuestaSeleccionada(indice);
     setMostrarResultado(true);
@@ -1323,22 +1023,21 @@ export default function TriviaBiblica() {
     setJuegoTerminado(false);
   };
 
-  // 🔥 FINAL DEL JUEGO
   if (juegoTerminado) {
     const porcentaje = (puntuacion / preguntasTrivia.length) * 100;
 
     return (
-      <div className="min-h-screen py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 py-12 px-4">
         <div className="container mx-auto max-w-2xl">
-          <Card className="bg-gray-800/50 border-gray-700 p-8 text-center">
-            <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-white mb-4">¡Juego Terminado!</h2>
+          <Card className="bg-white border border-sky-200 shadow-xl rounded-3xl p-8 text-center">
+            <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">¡Juego Terminado!</h2>
 
-            <p className="text-2xl text-cyan-400 mb-2">
+            <p className="text-2xl text-sky-600 font-bold mb-2">
               Puntuación: {puntuacion} de {preguntasTrivia.length}
             </p>
 
-            <p className="text-xl text-gray-300 mb-6">
+            <p className="text-xl text-gray-600 mb-6">
               {porcentaje >= 70
                 ? "¡Excelente conocimiento bíblico!"
                 : porcentaje >= 50
@@ -1346,7 +1045,10 @@ export default function TriviaBiblica() {
                 : "¡Sigue aprendiendo!"}
             </p>
 
-            <Button onClick={reiniciarJuego} className="bg-yellow-500 text-black font-semibold">
+            <Button
+              onClick={reiniciarJuego}
+              className="bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-2xl"
+            >
               <RotateCcw className="w-5 h-5 mr-2" />
               Jugar de Nuevo
             </Button>
@@ -1356,45 +1058,41 @@ export default function TriviaBiblica() {
     );
   }
 
-  // 🔥 UI DEL JUEGO
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 py-12 px-4">
       <div className="container mx-auto max-w-2xl">
 
-        {/* HEADER */}
         <div className="text-center mb-8">
           <Link to={createPageUrl("Explore")}>
-            <Button className="mb-4 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold shadow-lg">
+            <Button className="mb-4 bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-lg rounded-2xl">
               <span className="text-2xl mr-2">👉</span>
               Volver a Juegos
             </Button>
           </Link>
 
           <div className="flex items-center justify-center gap-3 mb-4">
-            <BookOpen className="w-8 h-8 text-green-400" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+            <BookOpen className="w-8 h-8 text-emerald-600" />
+            <h1 className="text-4xl font-bold text-emerald-600">
               Trivia Bíblica
             </h1>
-            <BookOpen className="w-8 h-8 text-green-400" />
+            <BookOpen className="w-8 h-8 text-emerald-600" />
           </div>
 
-          <p className="text-gray-300">Pon a prueba tu conocimiento de la Biblia</p>
+          <p className="text-gray-600">Pon a prueba tu conocimiento de la Biblia</p>
           <GameShareButtons page="TriviaBiblica" title="Trivia Bíblica" />
         </div>
 
-        {/* PROGRESO */}
         <div className="flex justify-between items-center mb-6">
-          <span className="text-white font-semibold">
+          <span className="text-gray-700 font-semibold">
             Pregunta {preguntaActual + 1} de {preguntasTrivia.length}
           </span>
-          <span className="text-cyan-400 font-semibold">
+          <span className="text-sky-600 font-semibold">
             Puntuación: {puntuacion}
           </span>
         </div>
 
-        {/* PREGUNTA */}
-        <Card className="bg-gray-800/50 border-gray-700 p-8 mb-6">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">
+        <Card className="bg-white border border-sky-200 shadow-xl rounded-3xl p-8 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
             {preguntaMezclada.pregunta}
           </h2>
 
@@ -1404,14 +1102,16 @@ export default function TriviaBiblica() {
                 key={indice}
                 onClick={() => !mostrarResultado && manejarRespuesta(indice)}
                 disabled={mostrarResultado}
-                className={`w-full p-4 rounded-lg text-left font-semibold transition-all ${
+                className={`w-full p-4 rounded-2xl text-left font-semibold transition-all border ${
                   mostrarResultado
                     ? indice === respuestaSeleccionada
                       ? respuestaSeleccionada === preguntaMezclada.respuestaCorrecta
-                        ? "bg-green-500 text-white"
-                        : "bg-red-500 text-white"
-                      : "bg-gray-700 text-gray-400"
-                    : "bg-gray-700 text-white hover:bg-gray-600"
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : "bg-red-500 border-red-500 text-white"
+                      : indice === preguntaMezclada.respuestaCorrecta
+                      ? "bg-emerald-100 border-emerald-300 text-emerald-800"
+                      : "bg-slate-50 border-slate-200 text-gray-500"
+                    : "bg-sky-50 border-sky-200 text-gray-800 hover:bg-sky-100"
                 }`}
               >
                 {opcion}
@@ -1420,10 +1120,9 @@ export default function TriviaBiblica() {
           </div>
         </Card>
 
-        {/* BARRA DE PROGRESO */}
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-sky-100 rounded-full h-3 overflow-hidden shadow-inner">
           <div
-            className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-3 rounded-full transition-all duration-300"
             style={{ width: `${((preguntaActual + 1) / preguntasTrivia.length) * 100}%` }}
           />
         </div>
