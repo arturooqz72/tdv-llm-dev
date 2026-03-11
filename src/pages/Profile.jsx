@@ -22,8 +22,21 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import PermissionGuard from '@/components/PermissionGuard';
+
+const religions = [
+  { value: 'lldm', label: 'LLDM' },
+  { value: 'otra', label: 'Otro' },
+  { value: 'prefiero_no_decir', label: 'Prefiero no decir' },
+];
+
+function getReligionLabel(religion, customReligion) {
+  if (religion === 'lldm') return 'LLDM';
+  if (religion === 'prefiero_no_decir') return 'Prefiero no decir';
+  if (religion === 'otra') return customReligion?.trim() || 'Otro';
+  return '';
+}
 
 export default function Profile() {
   const { user: currentUser, isLoadingAuth, refreshProfile } = useAuth();
@@ -36,6 +49,8 @@ export default function Profile() {
     bio: '',
     location: '',
     website: '',
+    religion: 'prefiero_no_decir',
+    custom_religion: '',
   });
 
   const {
@@ -121,6 +136,8 @@ export default function Profile() {
       bio: profile.bio || '',
       location: profile.location || '',
       website: profile.website || '',
+      religion: profile.religion || 'prefiero_no_decir',
+      custom_religion: profile.custom_religion || '',
     });
   }, [profile]);
 
@@ -139,6 +156,10 @@ export default function Profile() {
     return userVideos.reduce((sum, v) => sum + Number(v.likes_count || 0), 0);
   }, [userVideos]);
 
+  const religionLabel = useMemo(() => {
+    return getReligionLabel(profile?.religion, profile?.custom_religion);
+  }, [profile?.religion, profile?.custom_religion]);
+
   const handleSaveProfile = async () => {
     if (!currentUser?.id) return;
 
@@ -146,11 +167,19 @@ export default function Profile() {
     setMessage('');
 
     try {
+      const normalizedReligion = editForm.religion || 'prefiero_no_decir';
+      const normalizedCustomReligion =
+        normalizedReligion === 'otra'
+          ? editForm.custom_religion?.trim() || null
+          : null;
+
       const payload = {
         full_name: editForm.full_name?.trim() || null,
         bio: editForm.bio?.trim() || null,
         location: editForm.location?.trim() || null,
         website: editForm.website?.trim() || null,
+        religion: normalizedReligion,
+        custom_religion: normalizedCustomReligion,
         updated_at: new Date().toISOString(),
       };
 
@@ -226,6 +255,12 @@ export default function Profile() {
                           {joinedText}
                         </Badge>
                       )}
+
+                      {religionLabel && (
+                        <Badge variant="outline" className="text-gray-600">
+                          {religionLabel}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -239,6 +274,8 @@ export default function Profile() {
                         bio: profile?.bio || '',
                         location: profile?.location || '',
                         website: profile?.website || '',
+                        religion: profile?.religion || 'prefiero_no_decir',
+                        custom_religion: profile?.custom_religion || '',
                       });
                     } else {
                       setIsEditing(true);
@@ -280,6 +317,42 @@ export default function Profile() {
                       rows={4}
                     />
                   </div>
+
+                  <div>
+                    <LabelText>Religión o creencia</LabelText>
+                    <select
+                      value={editForm.religion}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          religion: e.target.value,
+                          custom_religion:
+                            e.target.value === 'otra' ? prev.custom_religion : '',
+                        }))
+                      }
+                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      {religions.map((religion) => (
+                        <option key={religion.value} value={religion.value}>
+                          {religion.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {editForm.religion === 'otra' && (
+                    <div>
+                      <LabelText>Escribe tu creencia</LabelText>
+                      <Input
+                        value={editForm.custom_religion}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, custom_religion: e.target.value })
+                        }
+                        placeholder="Escribe tu creencia"
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <LabelText>Ubicación</LabelText>
@@ -328,6 +401,13 @@ export default function Profile() {
                   )}
 
                   <div className="flex flex-wrap gap-4 text-sm">
+                    {religionLabel && (
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <Shield className="w-4 h-4" />
+                        {religionLabel}
+                      </div>
+                    )}
+
                     {profile?.location && (
                       <div className="flex items-center gap-1 text-gray-600">
                         <MapPin className="w-4 h-4" />
