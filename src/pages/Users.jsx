@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,85 +9,43 @@ import { Search, Users as UsersIcon, Zap, MessageCircle, Sparkles } from 'lucide
 import { createPageUrl } from '@/utils';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import FollowButton from '@/components/FollowButton';
 import OnlineIndicator from '@/components/OnlineIndicator';
 
 const religions = [
   { value: 'lldm', label: 'LLDM' },
-  { value: 'cristianismo', label: 'Cristianismo' },
-  { value: 'islam', label: 'Islam' },
-  { value: 'judaismo', label: 'Judaísmo' },
-  { value: 'budismo', label: 'Budismo' },
-  { value: 'hinduismo', label: 'Hinduismo' },
-  { value: 'espiritualidad', label: 'Espiritualidad' },
-  { value: 'ateismo', label: 'Ateísmo' },
-  { value: 'agnosticismo', label: 'Agnosticismo' },
-  { value: 'otra', label: 'Otra' },
-  { value: 'prefiero_no_decir', label: 'Prefiero no decir' }
+  { value: 'otra', label: 'Otro' },
+  { value: 'prefiero_no_decir', label: 'Prefiero no decir' },
 ];
 
+function getReligionLabel(religion, customReligion) {
+  if (religion === 'lldm') return 'LLDM';
+  if (religion === 'prefiero_no_decir') return 'Prefiero no decir';
+  if (religion === 'otra') return customReligion?.trim() || 'Otro';
+  return '';
+}
+
 export default function Users() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser, isLoadingAuth, navigateToLogin } = useAuth();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-
-        await base44.auth.updateMe({
-          last_seen: new Date().toISOString()
-        });
-      } catch (error) {
-        console.log('Usuario no autenticado');
-      }
-    };
-    loadUser();
-
-    const interval = setInterval(async () => {
-      try {
-        await base44.auth.updateMe({
-          last_seen: new Date().toISOString()
-        });
-      } catch (error) {
-        console.log('Error updating last_seen');
-      }
-    }, 120000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const { data: allUsers = [], isLoading, refetch } = useQuery({
-    queryKey: ['all-public-profiles'],
+  const {
+    data: allUsers = [],
+    isLoading: loadingUsers,
+  } = useQuery({
+    queryKey: ['all-profiles-users-page'],
     queryFn: async () => {
-      console.log('🔍 Cargando perfiles públicos...');
-      const profiles = await base44.entities.PublicProfile.list();
-      console.log('✅ Perfiles cargados:', profiles.length);
-      return profiles;
-    },
-    enabled: !!currentUser,
-    refetchInterval: 30000,
-    staleTime: 60000
-  });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name', { ascending: true });
 
-  const { data: following = [] } = useQuery({
-    queryKey: ['following', currentUser?.email],
-    queryFn: async () => {
-      if (!currentUser) return [];
-      const follows = await base44.entities.Follow.filter({
-        follower_email: currentUser.email
-      });
-      return follows;
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!currentUser
-  });
-
-  const { data: blockedUsers = [] } = useQuery({
-    queryKey: ['blocked-users'],
-    queryFn: () => base44.entities.BlockedUser.list(),
-    enabled: currentUser?.role === 'admin'
+    enabled: !!currentUser?.id,
+    staleTime: 60000,
   });
 
   const isOnline = (lastSeen) => {
@@ -97,27 +56,58 @@ export default function Users() {
     return diffMinutes < 5;
   };
 
-  const filteredUsers = allUsers.filter(user => {
-    const matchesSearch =
-      !searchTerm ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.religion?.toLowerCase().includes(searchTerm.toLowerCase());
+  const normalizedUsers = useMemo(() => {
+    return allUsers
+      .filter((user) => user?.id)
+      .map((user) => {
+        const email = user.email || '';
+        return {
+          ...user,
+          displayEmail: email,
+          displayName: user.full_name || email.split('@')[0] || 'Usuario',
+          displayAvatar: user.avatar_url || '',
+          displayBio: user.bio || '',
+          displayReligionLabel: getReligionLabel(user.religion, user.custom_religion),
+          displayLastSeen: user.last_seen || null,
+        };
+      });
+  }, [allUsers]);
 
-    if (filter === 'online') {
-      return matchesSearch && isOnline(user.last_seen);
-    } else if (filter === 'following') {
-      const followingEmails = following.map(f => f.following_email);
-      return matchesSearch && followingEmails.includes(user.user_email);
-    }
+  const filteredUsers = useMemo(() => {
+    return normalizedUsers.filter((user) => {
+      const matchesSearch =
+        !searchTerm ||
+        user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.displayEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.displayReligionLabel.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch;
-  });
+      if (!matchesSearch) return false;
 
-  console.log('📊 Debug - Total usuarios:', allUsers.length);
-  console.log('📊 Debug - Usuarios filtrados:', filteredUsers.length);
-  console.log('📊 Debug - Búsqueda:', searchTerm);
-  console.log('📊 Debug - Filtro:', filter);
+      if (filter === 'online') {
+        return isOnline(user.displayLastSeen);
+      }
+
+      return true;
+    });
+  }, [normalizedUsers, searchTerm, filter]);
+
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#e9f9ff] via-[#f5fcff] to-[#ffffff] py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {Array(6).fill(0).map((_, i) => (
+              <div key={i} className="bg-white rounded-3xl p-4 sm:p-6 space-y-4 border border-cyan-200 shadow-sm">
+                <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto" />
+                <Skeleton className="h-4 w-3/4 mx-auto" />
+                <Skeleton className="h-4 w-1/2 mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -136,7 +126,7 @@ export default function Users() {
           </p>
 
           <Button
-            onClick={() => base44.auth.redirectToLogin()}
+            onClick={navigateToLogin}
             className="bg-cyan-500 hover:bg-cyan-400 text-white px-8 py-3 text-lg rounded-xl font-bold shadow-sm"
           >
             Iniciar Sesión
@@ -149,7 +139,6 @@ export default function Users() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#e9f9ff] via-[#f5fcff] to-[#ffffff] py-6 px-4 sm:py-12 sm:px-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-6 sm:mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-4 py-1.5 text-sm text-cyan-700 shadow-sm mb-4">
             <Sparkles className="w-4 h-4" />
@@ -169,7 +158,6 @@ export default function Users() {
           </p>
         </div>
 
-        {/* Search */}
         <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
           <div className="relative">
             <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
@@ -182,7 +170,6 @@ export default function Users() {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="mb-6 sm:mb-8 overflow-x-auto">
           <Tabs value={filter} onValueChange={setFilter}>
             <TabsList className="bg-white border border-cyan-200 p-1 text-slate-700 w-full sm:w-auto shadow-sm rounded-xl">
@@ -194,15 +181,11 @@ export default function Users() {
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
                 En Línea
               </TabsTrigger>
-              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-cyan-500 data-[state=active]:text-white rounded-lg">
-                Siguiendo
-              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        {/* Users Grid */}
-        {isLoading ? (
+        {loadingUsers ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {Array(6).fill(0).map((_, i) => (
               <div key={i} className="bg-white rounded-3xl p-4 sm:p-6 space-y-4 border border-cyan-200 shadow-sm">
@@ -251,99 +234,72 @@ export default function Users() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-cyan-200 p-4 sm:p-6"
-              >
-                <div className="text-center">
-                  <div className="relative inline-block mb-3 sm:mb-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-cyan-100 border border-cyan-200 overflow-hidden flex items-center justify-center">
-                      {user.profile_picture_url ? (
-                        <img
-                          src={user.profile_picture_url}
-                          alt="Perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-cyan-700 text-xl sm:text-2xl font-bold">
-                          {user.user_email?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+            {filteredUsers.map((user) => {
+              const religionEntry = religions.find((r) => r.value === user.religion);
+              const displayReligion =
+                religionEntry?.label ||
+                user.displayReligionLabel ||
+                '';
 
-                    <OnlineIndicator
-                      lastSeen={user.last_seen}
-                      className="absolute bottom-0 right-0"
-                    />
-                  </div>
+              return (
+                <div
+                  key={user.id}
+                  className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-cyan-200 p-4 sm:p-6"
+                >
+                  <div className="text-center">
+                    <div className="relative inline-block mb-3 sm:mb-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-cyan-100 border border-cyan-200 overflow-hidden flex items-center justify-center">
+                        {user.displayAvatar ? (
+                          <img
+                            src={user.displayAvatar}
+                            alt="Perfil"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-cyan-700 text-xl sm:text-2xl font-bold">
+                            {user.displayEmail?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </div>
 
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1 break-words">
-                    {user.full_name || user.user_email?.split('@')[0]}
-                  </h3>
-
-                  {user.religion && (
-                    <p className="text-xs sm:text-sm text-cyan-700 font-medium mb-2 sm:mb-3">
-                      {religions.find(r => r.value === user.religion)?.label || user.religion}
-                    </p>
-                  )}
-
-                  {user.bio && (
-                    <p className="text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4 line-clamp-2">
-                      {user.bio}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-slate-500">
-                    <div>
-                      <span className="font-bold text-slate-900">{user.videos_count || 0}</span> videos
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-900">{user.followers_count || 0}</span> seguidores
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <FollowButton
-                        targetUserEmail={user.user_email}
-                        currentUser={currentUser}
-                        onFollowChange={refetch}
+                      <OnlineIndicator
+                        lastSeen={user.displayLastSeen}
+                        className="absolute bottom-0 right-0"
                       />
+                    </div>
 
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1 break-words">
+                      {user.displayName}
+                    </h3>
+
+                    {displayReligion && (
+                      <p className="text-xs sm:text-sm text-cyan-700 font-medium mb-2 sm:mb-3">
+                        {displayReligion}
+                      </p>
+                    )}
+
+                    {user.displayBio && (
+                      <p className="text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4 line-clamp-2">
+                        {user.displayBio}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-center gap-2">
                       <Link to={createPageUrl('GroupChat')}>
                         <Button
                           variant="outline"
                           size="sm"
                           className="border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800 rounded-xl"
                         >
-                          <MessageCircle className="w-4 h-4" />
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Chat
                         </Button>
                       </Link>
                     </div>
-
-                    {currentUser?.role === 'admin' && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={async () => {
-                          await base44.entities.BlockedUser.create({
-                            user_email: user.user_email,
-                            blocked_by: currentUser.email,
-                            reason: 'Bloqueado por administrador'
-                          });
-                          await base44.entities.PublicProfile.update(user.id, { is_blocked: true });
-                          refetch();
-                        }}
-                        className="rounded-xl"
-                      >
-                        Bloquear
-                      </Button>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
