@@ -1,67 +1,81 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, Send } from 'lucide-react';
 import CommentThread from './CommentThread';
 
-export default function CommentSection({ 
-  videoId, 
+export default function CommentSection({
+  videoId,
   videoOwnerId,
   currentUser,
-  initialCommentsCount = 0
+  initialCommentsCount = 0,
 }) {
   const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: comments = [], refetch } = useQuery({
     queryKey: ['comments', videoId],
     queryFn: async () => {
-      // Only fetch top-level comments (no parent)
-      const allComments = await base44.entities.Comment.filter({ video_id: videoId }, '-created_date');
-      return allComments.filter(c => !c.parent_comment_id);
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('video_id', videoId)
+        .is('parent_comment_id', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!videoId
+    enabled: !!videoId,
   });
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    if (!comment.trim() || !currentUser) return;
+    if (!comment.trim() || !currentUser || submitting) return;
 
-    await base44.entities.Comment.create({
-      video_id: videoId,
-      user_email: currentUser.email,
-      user_name: currentUser.full_name || currentUser.email.split('@')[0],
-      content: comment
-    });
+    setSubmitting(true);
 
-    // Update video comments count
-    await base44.entities.Video.update(videoId, {
-      comments_count: (initialCommentsCount || 0) + 1
-    });
+    try {
+      const payload = {
+        video_id: videoId,
+        user_email: currentUser.email,
+        user_name: currentUser.name || currentUser.email.split('@')[0],
+        content: comment.trim(),
+        likes_count: 0,
+        replies_count: 0,
+      };
 
-    // Notify video owner
-    if (videoOwnerId !== currentUser.email) {
-      const prefs = await base44.entities.NotificationPreference.filter({
-        user_email: videoOwnerId
-      });
-      
-      const shouldNotify = prefs.length === 0 || prefs[0].new_comments !== false;
-      
-      if (shouldNotify) {
-        await base44.entities.Notification.create({
-          user_email: videoOwnerId,
-          type: 'new_comment',
-          message: `${currentUser.full_name || currentUser.email.split('@')[0]} comentó en tu video`,
-          related_id: videoId,
-          from_user: currentUser.email,
-          from_user_name: currentUser.full_name || currentUser.email.split('@')[0]
-        });
+      const { error: insertError } = await supabase
+        .from('comments')
+        .insert([payload]);
+
+      if (insertError) throw insertError;
+
+      // Actualiza comments_count en videos solo si esa columna existe
+      const { data: videoData, error: videoFetchError } = await supabase
+        .from('videos')
+        .select('id, comments_count')
+        .eq('id', videoId)
+        .maybeSingle();
+
+      if (!videoFetchError && videoData?.id) {
+        await supabase
+          .from('videos')
+          .update({
+            comments_count: Number(videoData.comments_count || 0) + 1,
+          })
+          .eq('id', videoId);
       }
-    }
 
-    setComment('');
-    refetch();
+      setComment('');
+      await refetch();
+    } catch (error) {
+      console.error('Error publicando comentario:', error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -71,7 +85,6 @@ export default function CommentSection({
         Comentarios ({comments.length})
       </h2>
 
-      {/* Comment Form */}
       {currentUser ? (
         <form onSubmit={handleSubmitComment} className="mb-6">
           <Textarea
@@ -81,13 +94,13 @@ export default function CommentSection({
             className="mb-3 resize-none"
             rows={3}
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-gradient-to-r from-purple-600 to-pink-600"
-            disabled={!comment.trim()}
+            disabled={!comment.trim() || submitting}
           >
             <Send className="w-4 h-4 mr-2" />
-            Publicar
+            {submitting ? 'Publicando...' : 'Publicar'}
           </Button>
         </form>
       ) : (
@@ -98,7 +111,6 @@ export default function CommentSection({
         </div>
       )}
 
-      {/* Comments List */}
       <div className="space-y-4 max-h-96 overflow-y-auto">
         {comments.map((c) => (
           <CommentThread
@@ -110,7 +122,7 @@ export default function CommentSection({
             onCommentAdded={refetch}
           />
         ))}
-        
+
         {comments.length === 0 && (
           <p className="text-center text-gray-500 py-8">
             Sé el primero en comentar
