@@ -16,7 +16,6 @@ import Ahorcado from './pages/Ahorcado';
 import AllPrograms from './pages/AllPrograms';
 import AudioManager from './pages/AudioManager';
 import Birthdays from './pages/Birthdays';
-import Chat from './pages/Chat';
 import Concurso from './pages/Concurso';
 import ConflictsManager from './pages/ConflictsManager';
 import EnviarSaludos from './pages/EnviarSaludos';
@@ -65,7 +64,6 @@ export const PAGES = {
     "AppStats": AdminStats,
     "AudioManager": AudioManager,
     "Birthdays": Birthdays,
-    "Chat": Chat,
     "Concurso": Concurso,
     "ConflictsManager": ConflictsManager,
     "EnviarSaludos": EnviarSaludos,
