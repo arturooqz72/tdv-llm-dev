@@ -23,7 +23,6 @@ import EscuchaYGana from './pages/EscuchaYGana';
 import EscuchaYGanaResultados from './pages/EscuchaYGanaResultados';
 import Explore from './pages/Explore';
 import Ganadores from './pages/Ganadores';
-import GoLive from './pages/GoLive';
 import Home from './pages/Home';
 import Index from './pages/Index';
 import JuegaYGana from './pages/JuegaYGana';
