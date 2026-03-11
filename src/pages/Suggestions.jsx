@@ -65,29 +65,26 @@ export default function Suggestions() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-          <Lightbulb className="w-6 h-6 text-yellow-400" />
+        <div className="w-12 h-12 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+          <Lightbulb className="w-6 h-6 text-amber-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Sugerencias</h1>
-          <p className="text-gray-400 text-sm">Comparte ideas para mejorar la comunidad</p>
+          <h1 className="text-2xl font-bold text-gray-900">Sugerencias</h1>
+          <p className="text-gray-600 text-sm">Comparte ideas para mejorar la comunidad</p>
         </div>
       </div>
 
-      {/* Form (only for logged in users) */}
       {currentUser ? (
         <div className="mb-8">
           <SuggestionForm onSuccess={() => queryClient.invalidateQueries({ queryKey: ['suggestions'] })} />
         </div>
       ) : (
-        <div className="mb-8 bg-gray-900/60 border border-gray-700 rounded-2xl p-5 text-center">
-          <p className="text-gray-400">Inicia sesión para enviar sugerencias y votar</p>
+        <div className="mb-8 bg-white border border-sky-200 rounded-2xl p-5 text-center shadow-sm">
+          <p className="text-gray-600">Inicia sesión para enviar sugerencias y votar</p>
         </div>
       )}
 
-      {/* Filters */}
       <div className="flex gap-2 flex-wrap mb-6">
         {filters.map(f => (
           <button
@@ -95,8 +92,8 @@ export default function Suggestions() {
             onClick={() => setFilter(f.key)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               filter === f.key
-                ? 'bg-cyan-500 text-black'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'bg-white border border-sky-200 text-sky-700 hover:bg-sky-50'
             }`}
           >
             {f.label}
@@ -104,15 +101,14 @@ export default function Suggestions() {
         ))}
       </div>
 
-      {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 bg-gray-900/50 rounded-2xl border border-gray-700">
-          <Lightbulb className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400">No hay sugerencias aún. ¡Sé el primero!</p>
+        <div className="text-center py-20 bg-white rounded-2xl border border-sky-200 shadow-sm">
+          <Lightbulb className="w-12 h-12 text-sky-300 mx-auto mb-3" />
+          <p className="text-gray-500">No hay sugerencias aún. ¡Sé el primero!</p>
         </div>
       ) : (
         <div className="space-y-3">
