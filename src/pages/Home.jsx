@@ -33,8 +33,7 @@ import {
 const RADIO_BASE = "https://radio.team-desveladoslldm.com";
 const STATION = "tdv_lldm-christian_radio";
 const RADIO_PAGE_URL = "http://radio24-7.team-desveladoslldm.com/";
-const HERO_IMAGE =
-  "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6965d0214fc84ccf68275f1d/66c9f4923_banner.jpg";
+const HERO_IMAGE = "/tdv-hero-100.png";
 
 const STREAMS = [
   `${RADIO_BASE}/listen/${STATION}/radio.mp3`,
@@ -262,11 +261,12 @@ export default function Home() {
               </div>
 
               <div className="relative">
-                <div className="rounded-[28px] border border-cyan-200 bg-white/75 p-3 md:p-4 shadow-lg">
+                <div className="rounded-[28px] border border-cyan-200 bg-white p-3 md:p-4 shadow-lg">
                   <img
                     src={HERO_IMAGE}
                     alt="Team Desvelados LLDM"
-                    className="w-full rounded-[22px] object-cover"
+                    className="w-full max-w-[520px] mx-auto h-auto object-contain rounded-[22px]"
+                    loading="lazy"
                   />
                 </div>
               </div>
@@ -325,7 +325,8 @@ export default function Home() {
                     </h3>
 
                     <p className="mt-2 text-slate-600 text-base md:text-xl">
-                      {isRadioPlaying ? "Reproduciendo" : "Pausado"} · Ruta {routeIndex + 1}/2
+                      {isRadioPlaying ? "Reproduciendo" : "Pausado"} · Ruta{" "}
+                      {routeIndex + 1}/2
                     </p>
 
                     <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -515,7 +516,9 @@ export default function Home() {
                                   Predicaciones
                                 </span>
                               </div>
-                              <span className="text-xs text-slate-500">Audio</span>
+                              <span className="text-xs text-slate-500">
+                                Audio
+                              </span>
                             </div>
 
                             <div className="flex items-center justify-between rounded-2xl bg-white/80 px-4 py-3 border border-slate-200">
@@ -525,7 +528,9 @@ export default function Home() {
                                   Cantos LLDM
                                 </span>
                               </div>
-                              <span className="text-xs text-slate-500">Audio</span>
+                              <span className="text-xs text-slate-500">
+                                Audio
+                              </span>
                             </div>
 
                             <div className="flex items-center justify-between rounded-2xl bg-white/80 px-4 py-3 border border-slate-200">
@@ -535,7 +540,9 @@ export default function Home() {
                                   Instrumental
                                 </span>
                               </div>
-                              <span className="text-xs text-slate-500">Audio</span>
+                              <span className="text-xs text-slate-500">
+                                Audio
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -573,8 +580,8 @@ export default function Home() {
                     <p className="leading-relaxed">
                       Ahora también puedes entrar a{" "}
                       <span className="font-bold text-slate-900">LLDMPlay</span>{" "}
-                      para escuchar contenido espiritual de la comunidad en un estilo
-                      moderno y fácil de explorar.
+                      para escuchar contenido espiritual de la comunidad en un
+                      estilo moderno y fácil de explorar.
                     </p>
                   </div>
                 </CardContent>
