@@ -206,7 +206,7 @@ export default function Profile() {
 
   if (isLoadingAuth || loadingProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-6">
+      <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 p-6">
         <Skeleton className="h-64 w-full rounded-3xl" />
       </div>
     );
@@ -214,16 +214,16 @@ export default function Profile() {
 
   return (
     <PermissionGuard>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-12 px-6">
+      <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-blue-100 py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-8">
-            <div className="relative h-48 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500" />
+          <div className="bg-white rounded-3xl shadow-xl border border-sky-100 overflow-hidden mb-8">
+            <div className="relative h-48 bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-500" />
 
             <div className="px-8 pb-8">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-20 gap-6">
                 <div className="flex items-end gap-6">
                   <div className="relative">
-                    <div className="w-32 h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                    <div className="w-32 h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gradient-to-br from-sky-400 to-cyan-500">
                       {profile?.avatar_url || currentUser?.photoURL ? (
                         <img
                           src={profile?.avatar_url || currentUser?.photoURL}
@@ -245,19 +245,19 @@ export default function Profile() {
                     <p className="text-gray-600">{currentUser?.email}</p>
 
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge className="bg-purple-600 text-white">
+                      <Badge className="bg-sky-600 text-white hover:bg-sky-600">
                         {currentUser?.role === 'admin' ? 'Administrador' : 'Usuario'}
                       </Badge>
 
                       {joinedText && (
-                        <Badge variant="outline" className="text-gray-600">
+                        <Badge variant="outline" className="text-gray-600 border-sky-200 bg-white">
                           <Calendar className="w-3 h-3 mr-1" />
                           {joinedText}
                         </Badge>
                       )}
 
                       {religionLabel && (
-                        <Badge variant="outline" className="text-gray-600">
+                        <Badge variant="outline" className="text-gray-600 border-sky-200 bg-white">
                           {religionLabel}
                         </Badge>
                       )}
@@ -282,7 +282,11 @@ export default function Profile() {
                     }
                   }}
                   variant={isEditing ? 'outline' : 'default'}
-                  className={isEditing ? '' : 'bg-gradient-to-r from-purple-600 to-pink-600'}
+                  className={
+                    isEditing
+                      ? 'border-sky-200 text-sky-700 hover:bg-sky-50'
+                      : 'bg-sky-500 hover:bg-sky-600 text-white'
+                  }
                 >
                   {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
                   {isEditing ? 'Cancelar' : 'Editar Perfil'}
@@ -290,7 +294,7 @@ export default function Profile() {
               </div>
 
               {message && (
-                <div className="mt-6 p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700">
+                <div className="mt-6 p-4 rounded-2xl bg-sky-50 border border-sky-200 text-sky-700">
                   {message}
                 </div>
               )}
@@ -303,7 +307,7 @@ export default function Profile() {
                       value={editForm.full_name}
                       onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                       placeholder="Tu nombre"
-                      className="mt-2"
+                      className="mt-2 border-sky-200 focus-visible:ring-sky-400"
                     />
                   </div>
 
@@ -313,7 +317,7 @@ export default function Profile() {
                       value={editForm.bio}
                       onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                       placeholder="Comparte algo sobre ti..."
-                      className="mt-2"
+                      className="mt-2 border-sky-200 focus-visible:ring-sky-400"
                       rows={4}
                     />
                   </div>
@@ -330,7 +334,7 @@ export default function Profile() {
                             e.target.value === 'otra' ? prev.custom_religion : '',
                         }))
                       }
-                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="mt-2 flex h-10 w-full rounded-md border border-sky-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-sky-400"
                     >
                       {religions.map((religion) => (
                         <option key={religion.value} value={religion.value}>
@@ -349,7 +353,7 @@ export default function Profile() {
                           setEditForm({ ...editForm, custom_religion: e.target.value })
                         }
                         placeholder="Escribe tu creencia"
-                        className="mt-2"
+                        className="mt-2 border-sky-200 focus-visible:ring-sky-400"
                       />
                     </div>
                   )}
@@ -360,7 +364,7 @@ export default function Profile() {
                       value={editForm.location}
                       onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                       placeholder="Ciudad, País"
-                      className="mt-2"
+                      className="mt-2 border-sky-200 focus-visible:ring-sky-400"
                     />
                   </div>
 
@@ -370,14 +374,14 @@ export default function Profile() {
                       value={editForm.website}
                       onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
                       placeholder="https://..."
-                      className="mt-2"
+                      className="mt-2 border-sky-200 focus-visible:ring-sky-400"
                     />
                   </div>
 
                   <Button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    className="bg-sky-500 hover:bg-sky-600 text-white"
                   >
                     {saving ? (
                       <>
@@ -395,7 +399,7 @@ export default function Profile() {
               ) : (
                 <div className="mt-6 space-y-4">
                   {profile?.bio && (
-                    <div className="p-4 bg-gray-50 rounded-xl">
+                    <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
                       <p className="text-gray-700">{profile.bio}</p>
                     </div>
                   )}
@@ -403,14 +407,14 @@ export default function Profile() {
                   <div className="flex flex-wrap gap-4 text-sm">
                     {religionLabel && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Shield className="w-4 h-4" />
+                        <Shield className="w-4 h-4 text-sky-600" />
                         {religionLabel}
                       </div>
                     )}
 
                     {profile?.location && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <MapPin className="w-4 h-4" />
+                        <MapPin className="w-4 h-4 text-sky-600" />
                         {profile.location}
                       </div>
                     )}
@@ -420,7 +424,7 @@ export default function Profile() {
                         href={profile.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-purple-600 hover:underline"
+                        className="flex items-center gap-1 text-sky-600 hover:underline"
                       >
                         <Globe className="w-4 h-4" />
                         {profile.website.replace(/^https?:\/\//, '')}
@@ -468,9 +472,9 @@ export default function Profile() {
             />
           </div>
 
-          <div className="mb-8 bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+          <div className="mb-8 bg-white rounded-3xl shadow-xl border border-sky-100 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <Calendar className="w-6 h-6 text-purple-600" />
+              <Calendar className="w-6 h-6 text-sky-600" />
               Actividad reciente
             </h2>
 
@@ -490,10 +494,10 @@ export default function Profile() {
                 {userVideos.slice(0, 6).map((video) => (
                   <div
                     key={video.id}
-                    className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                    className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl hover:bg-sky-100 transition-colors border border-sky-100"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-purple-200 flex items-center justify-center flex-shrink-0">
-                      <Video className="w-6 h-6 text-purple-600" />
+                    <div className="w-12 h-12 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0">
+                      <Video className="w-6 h-6 text-sky-600" />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -506,7 +510,7 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-sky-200 text-gray-600 bg-white">
                       {video.category || 'Video'}
                     </Badge>
                   </div>
@@ -525,9 +529,9 @@ export default function Profile() {
                 ))}
               </div>
             ) : userVideos.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                  <Video className="w-12 h-12 text-purple-500" />
+              <div className="text-center py-20 bg-white rounded-3xl border border-sky-100">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-sky-100 to-cyan-100 flex items-center justify-center">
+                  <Video className="w-12 h-12 text-sky-500" />
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900 mb-3">
                   No has subido videos aún
@@ -561,8 +565,8 @@ function LabelText({ children }) {
 
 function StatBox({ icon: Icon, label, value }) {
   return (
-    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-      <Icon className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+    <div className="text-center p-4 bg-gradient-to-br from-sky-50 to-cyan-50 rounded-2xl border border-sky-100">
+      <Icon className="w-6 h-6 mx-auto mb-2 text-sky-600" />
       <p className="text-2xl font-bold text-gray-900">{value}</p>
       <p className="text-sm text-gray-600">{label}</p>
     </div>
@@ -571,15 +575,15 @@ function StatBox({ icon: Icon, label, value }) {
 
 function MiniCard({ icon: Icon, title, value }) {
   return (
-    <Card className="bg-white border-gray-100 shadow-sm">
+    <Card className="bg-white border-sky-100 shadow-sm rounded-2xl">
       <CardContent className="p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-gray-500">{title}</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-            <Icon className="w-6 h-6 text-purple-600" />
+          <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-sky-600" />
           </div>
         </div>
       </CardContent>
