@@ -143,23 +143,29 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0B3A4A] via-[#061F2B] to-[#030B10] px-4">
-      <div className="bg-black border border-cyan-500 rounded-xl p-8 w-full max-w-md shadow-xl">
-        <h1 className="text-2xl font-bold text-cyan-400 text-center mb-2">
-          {isRegisterMode ? "Crear Cuenta" : "Iniciar Sesión"}
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-sky-50 to-blue-100 px-4 py-8">
+      <div className="w-full max-w-md rounded-3xl border border-sky-200 bg-white p-8 shadow-xl">
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100 border border-sky-200">
+            <span className="text-2xl">🔐</span>
+          </div>
 
-        <p className="text-sm text-gray-400 text-center mb-6">
-          {isRegisterMode
-            ? "Regístrate para acceder a chats, juegos y subir audios."
-            : "Ingresa con tu cuenta para continuar."}
-        </p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isRegisterMode ? "Crear Cuenta" : "Iniciar Sesión"}
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-600">
+            {isRegisterMode
+              ? "Regístrate para acceder a chats, juegos y subir audios."
+              : "Ingresa con tu cuenta para continuar."}
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="email"
             placeholder="Correo electrónico"
-            className="text-white bg-black border-cyan-500 placeholder:text-gray-400"
+            className="h-12 rounded-2xl border-sky-200 bg-white text-gray-900 placeholder:text-gray-400 focus-visible:ring-sky-400"
             value={email}
             autoComplete="email"
             onChange={(e) => setEmail(e.target.value)}
@@ -169,7 +175,7 @@ export default function Login() {
           <Input
             type="password"
             placeholder="Contraseña"
-            className="text-white bg-black border-cyan-500 placeholder:text-gray-400"
+            className="h-12 rounded-2xl border-sky-200 bg-white text-gray-900 placeholder:text-gray-400 focus-visible:ring-sky-400"
             value={password}
             autoComplete={isRegisterMode ? "new-password" : "current-password"}
             onChange={(e) => setPassword(e.target.value)}
@@ -180,7 +186,7 @@ export default function Login() {
             <Input
               type="password"
               placeholder="Confirmar contraseña"
-              className="text-white bg-black border-cyan-500 placeholder:text-gray-400"
+              className="h-12 rounded-2xl border-sky-200 bg-white text-gray-900 placeholder:text-gray-400 focus-visible:ring-sky-400"
               value={confirmPassword}
               autoComplete="new-password"
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -191,7 +197,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-bold disabled:opacity-70"
+            className="h-12 w-full rounded-2xl bg-sky-500 font-bold text-white hover:bg-sky-600 disabled:opacity-70"
           >
             {loading
               ? "Procesando..."
@@ -206,7 +212,7 @@ export default function Login() {
             <button
               type="button"
               onClick={handleResetPassword}
-              className="text-sm text-cyan-400 hover:text-cyan-300"
+              className="text-sm font-medium text-sky-600 hover:text-sky-700"
             >
               Olvidé mi contraseña
             </button>
@@ -221,7 +227,7 @@ export default function Login() {
               setPassword("");
               setConfirmPassword("");
             }}
-            className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
+            className="text-sm font-semibold text-sky-600 hover:text-sky-700"
           >
             {isRegisterMode
               ? "¿Ya tienes cuenta? Inicia sesión"
