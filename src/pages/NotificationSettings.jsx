@@ -238,11 +238,11 @@ export default function NotificationSettings() {
 
                 <div>
                   <h4 className="text-gray-900 font-semibold mb-1">
-                    Notificaciones en Tiempo Real
+                    Sistema de notificaciones
                   </h4>
 
                   <p className="text-sm text-gray-600">
-                    Las preferencias de esta pantalla ya no dependen de Base44.
+                    Estas preferencias ya funcionan de forma local para el usuario actual.
                     Más adelante se pueden sincronizar directamente con Supabase.
                   </p>
                 </div>
