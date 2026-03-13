@@ -16,7 +16,6 @@ import {
   Sparkles,
   Shield,
   Music,
-  Bell,
   TrendingUp,
   Lightbulb,
   Trophy,
@@ -79,8 +78,6 @@ export default function Layout({ children, currentPageName }) {
     return () => {};
   }, []);
 
-  const unreadMessagesCount = 0;
-
   const canAccessTeamDesveladosRoom =
     currentUser?.role === 'admin' ||
     currentUser?.canAccessTeamDesveladosRoom === true;
@@ -105,11 +102,8 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Compartir', icon: Upload, page: 'Upload' },
     { name: 'LLDMPlay', icon: Disc3, page: 'MyAudios' },
     { name: 'Sugerencias', icon: Lightbulb, page: 'Suggestions' },
-    { name: 'Perfil', icon: User, page: 'Profile' },
-    { name: 'Notificaciones', icon: Bell, page: 'NotificationSettings' }
+    { name: 'Perfil', icon: User, page: 'Profile' }
   ];
-
-  const creatorItems = [];
 
   const adminItems = currentUser?.role === 'admin'
     ? [
@@ -325,17 +319,6 @@ export default function Layout({ children, currentPageName }) {
                   >
                     Perfil
                   </Link>
-
-                  <Link
-                    to={createPageUrl('NotificationSettings')}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      currentPageName === 'NotificationSettings'
-                        ? 'bg-cyan-500 text-white shadow-sm'
-                        : 'text-slate-700 hover:bg-cyan-50 hover:text-cyan-700'
-                    }`}
-                  >
-                    Notificaciones
-                  </Link>
                 </>
               )}
 
@@ -472,12 +455,6 @@ export default function Layout({ children, currentPageName }) {
                     <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-white' : 'text-slate-700'}`}>
                       {item.name}
                     </span>
-
-                    {item.page === 'Chat' && unreadMessagesCount > 0 && (
-                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                      </span>
-                    )}
                   </Link>
                 ))}
 
@@ -517,24 +494,6 @@ export default function Layout({ children, currentPageName }) {
                     </span>
                   </Link>
                 )}
-
-                {creatorItems.map((item) => (
-                  <Link
-                    key={item.page}
-                    to={createPageUrl(item.page)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
-                      currentPageName === item.page
-                        ? 'bg-cyan-500 text-white border-cyan-500 shadow-sm'
-                        : 'text-slate-700 bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-300'
-                    }`}
-                  >
-                    <item.icon className={`w-6 h-6 ${currentPageName === item.page ? 'text-white' : 'text-cyan-500'}`} />
-                    <span className={`font-semibold text-base ${currentPageName === item.page ? 'text-white' : 'text-slate-700'}`}>
-                      {item.name}
-                    </span>
-                  </Link>
-                ))}
 
                 {currentUser?.role === 'admin' && adminItems.length > 0 && (
                   <div className="mt-4 bg-red-50 rounded-xl px-4 py-3 border border-red-200">
